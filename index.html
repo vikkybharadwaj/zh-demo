@@ -1,0 +1,926 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Bulk on AUTH</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap">
+<style>
+/* Layout: a presenter column beside one iPhone-sized device. The device is a fixed light UI (AUTH's white sheet); only the page around it follows the viewer's theme. */
+:root{
+  --pg:#EEF1F0; --pg-fg:#17201D; --pg-mute:#56635E; --pg-line:#D5DBD8; --pg-card:#FFFFFF;
+  --bezel:#0C0F0E;
+  --ink:#1C1C1C; --mint:#D5FDD3; --ok:#3E9E6A; --oktxt:#1F6B43;
+  --g1:#F5F5F5; --g2:#E4E4E4; --g3:#6B6B6B;
+  --warnbg:#FFF3DC; --warn:#7A4A00; --errbg:#FDECEA; --err:#A8231B; --infobg:#E8F0FF; --info:#1D4F9E;
+  --display:'Manrope',-apple-system,'SF Pro Display','Helvetica Neue',Arial,sans-serif;
+  --body:-apple-system,'SF Pro Text','Helvetica Neue',Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--pg:#0F1412;--pg-fg:#E6EEEA;--pg-mute:#9AA9A3;--pg-line:#26302C;--pg-card:#171E1B;color-scheme:dark}}
+:root[data-theme="dark"]{--pg:#0F1412;--pg-fg:#E6EEEA;--pg-mute:#9AA9A3;--pg-line:#26302C;--pg-card:#171E1B;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--pg);color:var(--pg-fg);font-family:var(--body);padding-block:20px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.page{display:flex;justify-content:center}
+
+.phone{--w:390px;position:relative;width:var(--w);height:min(844px,calc(100dvh - 40px));min-height:640px;background:#fff;color:var(--ink);border-radius:46px;border:9px solid var(--bezel);overflow:hidden;display:flex;flex-direction:column;font-family:var(--body);font-size:15px;-webkit-user-select:none;user-select:none;box-shadow:0 30px 60px -20px rgba(0,0,0,.45);isolation:isolate}
+.status{height:34px;flex:none;display:flex;justify-content:space-between;align-items:flex-end;padding:0 28px 4px;font-size:13px;font-weight:600;background:#fff}
+.strip{flex:none;background:#fff;border-bottom:1px solid var(--g2);padding:6px 10px 8px;display:grid;gap:6px;touch-action:pan-y}
+.seg{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;background:var(--g1);padding:3px;border-radius:12px}
+.seg button{appearance:none;border:0;background:transparent;border-radius:9px;padding:5px 0 5px;display:grid;gap:0;justify-items:center;font-family:var(--body);color:var(--g3);cursor:pointer;min-width:0}
+.seg button b{font-family:var(--display);font-size:13px;font-weight:800;line-height:1.1}
+.seg button span{font-size:9.5px;font-weight:600;line-height:1.2;white-space:nowrap}
+.seg button[aria-selected="true"]{background:var(--ink);color:#fff}
+button:focus-visible,[tabindex]:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #1D4F9E;outline-offset:2px}
+
+.app{position:relative;flex:1;min-height:0;background:var(--g1);overflow:hidden}
+.host{height:100%;overflow:auto;padding:16px 16px 12px;display:flex;flex-direction:column;gap:14px}
+.hh{display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:800;font-size:17px;touch-action:none}
+.logo i{width:26px;height:26px;border-radius:8px;background:var(--ink);color:#fff;font-style:normal;display:grid;place-items:center;font-size:14px}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--mint);display:grid;place-items:center;font-weight:700;font-size:12px}
+.card{background:#fff;border-radius:12px;padding:16px}
+.big{font-family:var(--display);font-weight:800;font-size:32px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.muted{color:var(--g3)}
+.small{font-size:12.5px;line-height:1.45}
+.row{display:flex;align-items:center;gap:12px}
+.grow{flex:1;min-width:0}
+.h2{font-family:var(--display);font-weight:800;font-size:19px;line-height:1.2;margin:0;text-wrap:balance}
+.h1{font-family:var(--display);font-weight:800;font-size:27px;line-height:1.15;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.btn{appearance:none;border:0;width:100%;min-height:50px;border-radius:8px;background:var(--ink);color:#fff;font:700 16px var(--body);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn[disabled]{background:var(--g2);color:var(--g3);cursor:not-allowed}
+.btn.out{background:#fff;color:var(--ink);border:1.5px solid var(--ink)}
+.btn.sm{min-height:40px;font-size:14px}
+.btn.ghost{background:transparent;color:var(--ink);text-decoration:underline;min-height:40px;font-size:14px}
+.banner{width:100%;border:0;text-align:left;font-family:var(--body);cursor:pointer;display:flex;gap:10px;align-items:center;background:var(--ink);color:#fff;border-radius:12px;padding:12px 14px;font-weight:600;font-size:14px}
+.banner small{display:block;font-weight:500;opacity:.8;font-size:12px}
+.found{background:var(--mint);border-radius:12px;padding:18px;display:grid;gap:12px}
+.sc{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.sc div{background:#fff;border-radius:10px;padding:8px 4px;text-align:center}
+.sc b{display:block;font-family:var(--display);font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+.sc span{display:block;font-size:9.5px;line-height:1.2;color:var(--g3);margin-top:2px}
+.hold-row{display:flex;justify-content:space-between;font-size:14px;padding:9px 0;border-top:1px solid var(--g1)}
+.hold-row:first-of-type{border-top:0}
+.foot{margin:6px 0 0;text-align:center;font-size:10.5px;color:var(--g3)}
+
+.sheet{position:absolute;inset:0;background:#fff;display:flex;flex-direction:column;transform:translateY(102%);transition:transform .38s cubic-bezier(.2,.8,.2,1);border-radius:16px 16px 0 0;box-shadow:0 -6px 24px rgba(0,0,0,.15);z-index:5}
+.sheet.open{transform:none}
+.tb{flex:none;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 6px}
+.ib{appearance:none;border:0;background:transparent;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--ink);cursor:pointer}
+.dots{display:flex;gap:5px;align-items:center}
+.dots i{width:6px;height:6px;border-radius:3px;background:var(--g2);transition:width .2s}
+.dots i.on{width:18px;background:var(--ink)}
+.sb{flex:1;min-height:0;overflow:auto;padding:6px 20px 16px;display:flex;flex-direction:column;gap:14px}
+.sf{flex:none;padding:8px 20px 12px;border-top:1px solid transparent;background:#fff;display:grid;gap:6px}
+.counter{align-self:flex-start;background:var(--g1);border-radius:99px;padding:4px 10px;font-size:12px;font-weight:700}
+.circle{width:72px;height:72px;border-radius:50%;background:var(--mint);display:grid;place-items:center;margin:4px auto 0}
+.circle.ok svg{color:var(--ok)}
+.center{text-align:center}
+.greycard{background:var(--g1);border-radius:12px;padding:16px;display:grid;gap:10px}
+.badges{display:flex;align-items:center;justify-content:center;gap:8px}
+.badge{width:40px;height:40px;border-radius:12px;background:#fff;border:1px solid var(--g2);display:grid;place-items:center;font-family:var(--display);font-weight:800}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;line-height:1.45;cursor:pointer}
+.chk input{appearance:none;flex:none;width:22px;height:22px;border-radius:6px;border:1.5px solid var(--g3);background:#fff;display:grid;place-items:center;margin:0;cursor:pointer}
+.chk input:checked{background:var(--ink);border-color:var(--ink)}
+.chk input:checked::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.lnk{appearance:none;border:0;background:none;padding:0;font:inherit;text-decoration:underline;color:inherit;cursor:pointer}
+.search{display:flex;align-items:center;gap:8px;background:var(--g1);border-radius:99px;padding:0 14px;height:42px}
+.search input{flex:1;border:0;background:transparent;font:15px var(--body);min-width:0;height:100%;outline-offset:6px;user-select:text;-webkit-user-select:text}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{appearance:none;border:1px solid var(--g2);background:#fff;border-radius:99px;padding:7px 13px;font:600 13px var(--body);cursor:pointer;color:var(--ink)}
+.chip[aria-pressed="true"],.chip.sel{background:var(--mint);border-color:var(--ok)}
+.chip small{color:var(--g3);font-weight:600;margin-left:3px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tile{appearance:none;background:#fff;border:1px solid var(--g2);border-radius:12px;padding:12px 4px 10px;display:grid;gap:7px;justify-items:center;font:600 12px var(--body);color:var(--ink);cursor:pointer;position:relative;min-width:0}
+.tile .nm{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
+.tile.dim{color:var(--g3)}
+.mono{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:15px;color:var(--ink)}
+.tag2{position:absolute;top:5px;right:5px;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:var(--infobg);color:var(--info);border-radius:5px;padding:2px 5px}
+.secure{background:#fff;border:1px solid var(--g2);box-shadow:0 8px 24px rgba(0,0,0,.1);border-radius:16px;padding:12px;display:grid;gap:10px;margin-top:auto;position:sticky;bottom:0}
+.secure .t{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px}
+.note{border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.45;display:flex;gap:10px}
+.note.warn{background:var(--warnbg);color:var(--warn)}
+.note.err{background:var(--errbg);color:var(--err)}
+.note.info{background:var(--infobg);color:var(--info)}
+.note.ok{background:var(--mint);color:#17402A}
+.note svg{flex:none;margin-top:1px}
+.note b{display:block;margin-bottom:2px}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:auto}
+.keypad button{appearance:none;border:0;background:transparent;height:46px;font:600 22px var(--display);cursor:pointer;border-radius:10px;color:var(--ink)}
+.keypad button:active{background:var(--g1)}
+.amt{font-family:var(--display);font-weight:800;font-size:54px;letter-spacing:-.03em;text-align:center;font-variant-numeric:tabular-nums;line-height:1.05}
+.coinline{color:var(--oktxt);font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;font-size:15px}
+.pcts{display:flex;justify-content:center;gap:8px}
+.rcpt{border:1px solid var(--g2);border-radius:12px;overflow:hidden}
+.rcpt .top{background:var(--g1);padding:14px 16px;text-align:center}
+.rcpt .top b{display:block;font-family:var(--display);font-size:26px;font-weight:800}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:9px 16px;font-size:13.5px;border-top:1px solid var(--g1)}
+.kv span:first-child{color:var(--g3);flex:none}
+.kv span:last-child{text-align:right;min-width:0;overflow-wrap:anywhere;font-weight:600}
+.kv button{appearance:none;border:0;background:none;cursor:pointer;vertical-align:middle;padding:2px;color:var(--ink)}
+.grp{padding:10px 16px 4px;display:flex;justify-content:space-between;align-items:center;background:#fff;border-top:1px solid var(--g2);font-family:var(--display);font-weight:800;font-size:14px}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:3px 9px 3px 7px;font-size:11.5px;font-weight:700;white-space:nowrap;background:var(--g1);color:#333;border:1px solid var(--g2)}
+.p-credited{background:var(--mint);color:#17402A;border-color:#A9E3A6}
+.p-confirming,.p-submitted,.p-match,.p-twofa{background:var(--infobg);color:var(--info);border-color:#C4D7F7}
+.p-scheduled,.p-pending,.p-capped,.p-held,.p-slow{background:var(--warnbg);color:var(--warn);border-color:#F0D9A6}
+.p-failed,.p-code,.p-balance,.p-looking{background:var(--errbg);color:var(--err);border-color:#F3C2BE}
+.spin{animation:spin 1.1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sec{font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--g3);display:flex;justify-content:space-between;align-items:center;margin-top:4px}
+.item{display:flex;align-items:center;gap:12px;padding:12px;background:#fff;border:1px solid var(--g2);border-radius:12px}
+.item.off{background:var(--g1);color:var(--g3)}
+.item .nm{font-weight:700;font-size:14.5px}
+.item .sub{font-size:12px;color:var(--g3);line-height:1.4}
+.item .r{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;font-size:14px;flex:none}
+.cb{appearance:none;flex:none;width:24px;height:24px;border-radius:7px;border:1.5px solid var(--g3);background:#fff;margin:0;display:grid;place-items:center;cursor:pointer}
+.cb:checked{background:var(--ink);border-color:var(--ink)}
+.cb:checked::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.cb:disabled{background:var(--g2);border-color:var(--g2);cursor:not-allowed}
+.sw{appearance:none;flex:none;width:46px;height:28px;border-radius:99px;background:var(--g2);position:relative;cursor:pointer;margin:0;transition:background .2s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .2s}
+.sw:checked{background:var(--ok)}
+.sw:checked::after{left:21px}
+.code{display:flex;gap:8px;justify-content:center}
+.code i{width:44px;height:54px;border:1.5px solid var(--g2);border-radius:10px;display:grid;place-items:center;font:800 24px var(--display);font-style:normal}
+.code.err i{border-color:var(--err)}
+.autofill{align-self:center;appearance:none;border:0;background:var(--g1);border-radius:10px;padding:10px 16px;font:600 14px var(--body);cursor:pointer;display:flex;gap:8px;align-items:center}
+.autofill small{color:var(--g3);font-weight:500}
+.prog{display:flex;gap:3px;margin-top:6px}
+.prog i{flex:1;height:4px;border-radius:2px;background:var(--g2)}
+.prog i.on{background:var(--ok)}
+.bar{height:8px;background:var(--g2);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ink);transition:width .6s}
+.slide{position:relative;height:56px;border-radius:99px;background:var(--g1);border:1px solid var(--g2);display:grid;place-items:center;overflow:hidden;touch-action:none}
+.slide span{font-weight:700;font-size:15px;color:var(--g3);pointer-events:none}
+.knob{position:absolute;left:4px;top:4px;width:46px;height:46px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;cursor:grab;touch-action:none}
+.slide.off{opacity:.45;pointer-events:none}
+.fill{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--mint)}
+.sold{text-decoration:line-through;color:var(--g3)}
+.lbl{font-size:11.5px;font-weight:700;color:var(--g3)}
+.tabular{font-variant-numeric:tabular-nums}
+
+.modal{position:absolute;inset:0;z-index:20;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;animation:fade .2s}
+.modal.mid{align-items:center;padding:24px}
+.msheet{background:#fff;width:100%;border-radius:20px 20px 0 0;padding:18px 20px 16px;display:grid;gap:12px;max-height:88%;overflow:auto;animation:up .3s cubic-bezier(.2,.8,.2,1)}
+.modal.mid .msheet{border-radius:20px;max-height:80%}
+.msheet ul{margin:0;padding-left:18px;display:grid;gap:8px;font-size:14px;line-height:1.45}
+.faceid{display:grid;justify-items:center;gap:10px;text-align:center;padding:10px 0}
+.faceid .f{width:70px;height:70px;border-radius:20px;border:2.5px solid var(--ink);display:grid;place-items:center;animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.07)}}
+@keyframes fade{from{opacity:0}}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+.toast{position:absolute;left:16px;right:16px;bottom:18px;z-index:30;background:var(--ink);color:#fff;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.4;animation:up .25s}
+.sl{display:grid;gap:8px}
+.mode{display:grid;grid-template-columns:1fr 1fr;gap:3px;background:var(--g1);padding:3px;border-radius:10px}
+.mode[hidden]{display:none}
+.mode button{appearance:none;border:0;background:transparent;border-radius:8px;height:28px;font:700 12px var(--body);color:var(--g3);cursor:pointer}
+.mode button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.sc4{grid-template-columns:repeat(4,1fr);margin-top:6px}
+.apptb{flex:none;height:52px;display:flex;align-items:center;gap:6px;padding:0 6px;font:700 15px var(--body);border-bottom:1px solid var(--g2)}
+.apptb .nwl{width:24px;height:24px;border-radius:7px;background:var(--ink);color:#fff;display:grid;place-items:center;font:800 13px var(--display)}
+.apptb .exl{width:24px;height:24px;border-radius:7px;background:#9C9C9C}
+.sheet.ex,.sheet.ex .sf{background:#ECECEC}
+.sheet.ex .apptb{background:#D8D8D8;border-color:#C9C9C9;color:#333}
+.sheet.ex .btn:not(.out):not([disabled]){background:#3D3D3D}
+.sheet.ex .item{border-color:#DADADA}
+.cpbar{display:flex;justify-content:space-between;gap:8px;background:var(--g1);border-radius:10px;padding:8px 10px;font-size:12px;flex:none}
+.cpbar span{color:var(--g3);font-weight:600}
+.sheet.ex .cpbar{background:#fff}
+.field{border:1px solid var(--g2);background:#fff;border-radius:10px;padding:8px 8px 8px 12px;display:flex;gap:8px;align-items:center}
+.field .k{font-size:11px;font-weight:700;color:var(--g3)}
+.field .v{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;overflow-wrap:anywhere}
+.field .v.ph{font-family:var(--body);color:var(--g3)}
+.rowbtn{width:100%;font:inherit;color:inherit;cursor:pointer;text-align:left}
+.rowbtn[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.modal.switch{flex-direction:column;align-items:center;justify-content:center;gap:16px;background:rgba(20,20,20,.72)}
+.apps{display:flex;gap:16px;animation:swl .85s ease-in-out both}
+.apps.back{animation-name:swr}
+.appc{width:118px;height:210px;border-radius:20px;background:#fff;display:grid;place-items:center;align-content:center;gap:8px;font:700 13px var(--body);color:var(--ink)}
+.appc i{width:40px;height:40px;border-radius:11px;background:var(--ink);color:#fff;display:grid;place-items:center;font:800 18px var(--display);font-style:normal}
+.appc.exc{background:#E2E2E2}.appc.exc i{background:#9C9C9C}
+.swlbl{color:#fff;font-weight:700;font-size:14px}
+@keyframes swl{from{transform:translateX(68px)}to{transform:translateX(-68px)}}
+@keyframes swr{from{transform:translateX(-68px)}to{transform:translateX(68px)}}
+.pill.wrap{white-space:normal;text-align:left}
+.risks{margin:0;padding-left:18px;display:grid;gap:8px;font-size:13.5px;line-height:1.45}
+.sl .item{align-items:flex-start}
+@media (max-width:430px){
+  body{padding-block:8px}
+  .phone{--w:100%;width:100%;border-radius:36px;border-width:6px;height:calc(100dvh - 16px)}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="page">
+
+  <div class="phone" id="phone">
+    <div class="status"><span>9:41</span><span aria-hidden="true">5G &nbsp;▮▮▮</span></div>
+    <div class="strip" id="strip">
+      <div class="seg" id="seg" role="tablist" aria-label="Experience level"></div>
+      <div class="mode" id="mode" role="group" aria-label="How today works" hidden></div>
+    </div>
+    <div class="app">
+      <div class="host" id="host"></div>
+      <div class="sheet" id="sheet" role="dialog" aria-label="AUTH" aria-modal="true"></div>
+    </div>
+    <div id="layer"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+/* ---------- icons ---------- */
+const P={
+ chevL:'<path d="M15 5l-7 7 7 7"/>',chevR:'<path d="M9 5l7 7-7 7"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+ copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 012-2h9"/>',qr:'<rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><path d="M14 14h2v2h-2zM18 14h2v6h-4M14 18v2"/>',
+ swap:'<path d="M7 4v14M7 18l-3-3M7 18l3-3M17 20V6M17 6l-3 3M17 6l3 3"/>',search:'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>',
+ clock:'<circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/>',lock:'<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>',
+ send:'<path d="M4 12l16-7-6 15-3-6z"/>',spin:'<path d="M12 4a8 8 0 108 8"/>',user:'<circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-4 3-6 7-6s7 2 7 6"/>',
+ cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',alert:'<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/>',
+ shield:'<path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/>',restart:'<path d="M4 12a8 8 0 108-8H8"/><path d="M8 1v6H2" transform="translate(2 0)"/>',
+ ff:'<path d="M4 6l8 6-8 6zM13 6l8 6-8 6z"/>',info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+ coin:'<circle cx="12" cy="12" r="9"/><path d="M9 9.5h4.5a1.8 1.8 0 010 3.6H10.5M9 13h5a1.8 1.8 0 010 3.5H9M11 7.5v11"/>',
+ link:'<path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3A4 4 0 0011 18.7l1-1"/>',
+ up:'<path d="M6 14l6-6 6 6"/>',face:'<path d="M9 9v2M15 9v2M12 9v4h-1M9 16c1.7 1.3 4.3 1.3 6 0"/>',arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+ ext:'<path d="M8 16L18 6M10 6h8v8"/>',bolt:'<path d="M13 3L5 14h6l-1 7 8-11h-6z"/>',star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>'
+};
+const ic=(n,s=20,w=1.8)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"${n==='spin'?' class="spin"':''}>${P[n]}</svg>`;
+const $=s=>document.querySelector(s);
+const money=n=>'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- mock data ---------- */
+const C={
+ BTC:{n:'Bitcoin',qty:0.0712,dec:4,usd:4820,net:'Bitcoin',fee:3.40,tx:'7f3a91…c91e',tint:'#FFE3C2',credit:'9:54 AM'},
+ ETH:{n:'Ethereum',qty:0.6841,dec:4,usd:2310,net:'Ethereum',fee:1.85,tx:'0x9c4e…b2d7',tint:'#DCE2FF',credit:'9:47 AM'},
+ SOL:{n:'Solana',qty:4.2,dec:2,usd:640,net:'Solana',fee:0.04,tx:'5Kq2…Ta9w',tint:'#E8DBFF',credit:'9:50 AM'},
+ USDC:{n:'USD Coin',qty:1200,dec:2,usd:1200,net:'Ethereum (ERC-20)',fee:1.00,tx:'0x31ab…77f0',tint:'#D6EBFF',credit:'Sun 9:14 AM'},
+ DOGE:{n:'Dogecoin',qty:11.4,dec:1,usd:3.12,net:'Dogecoin',fee:0,tx:'',tint:'#FFF0B8'},
+ ZORB:{n:'Zorbcoin',qty:820,dec:0,usd:85,net:'Zorb',fee:0,tx:'0x5de1…09aa',tint:'#EADFD6',credit:'9:52 AM'}
+};
+const qtyStr=(c,q)=>q.toLocaleString('en-US',{minimumFractionDigits:C[c].dec,maximumFractionDigits:C[c].dec})+' '+c;
+const ORDER=['BTC','ETH','SOL','USDC']; // largest balance first
+const LV=[{id:1,a:'1★',b:'Today'},{id:3,a:'3★',b:'Shortcut'},{id:5,a:'5★',b:'Phase 1'},{id:7,a:'7★',b:'Phase 2'},{id:10,a:'10★',b:'Phase 3'},{id:11,a:'11★',b:'Vision'}];
+const LNAME={1:'1★ Today',3:'3★ Shortcut',5:'5★ Phase 1',7:'7★ Phase 2',10:'10★ Phase 3',11:'11★ Vision'};
+const CFG={
+ 1:{kind:'single'},3:{kind:'sell'},11:{kind:'vision',codes:false,hold:false,covered:true,basis:'import'},
+ 5:{kind:'bulk',wallets:false,codes:true,hold:true,covered:false,basis:'none',opt:false,partner:false},
+ 7:{kind:'bulk',wallets:true,codes:true,hold:true,covered:true,basis:'import',opt:true,partner:false},
+ 10:{kind:'bulk',wallets:true,codes:false,hold:false,covered:true,basis:'import',opt:true,partner:true}
+};
+const HOLD_ETA='Sun, Nov 1 · about 9:14 AM';
+const STATUS_HELP=[
+ ['pending','In the plan, not yet sent by the exchange.'],
+ ['twofa','The exchange is waiting for a code before it releases this coin.'],
+ ['confirming','Sent by the exchange and on the network, waiting for confirmations. Not complete yet.'],
+ ['match','AUTH is checking the name on the exchange account against yours. Funds stay unavailable until it passes.'],
+ ['credited','Funds are available in Northwind. Only shown once the product confirms it.'],
+ ['scheduled','The exchange is likely holding this transfer. It runs by itself when the hold ends; the ETA is an estimate.'],
+ ['capped','Above the limit Northwind set. The amount up to the limit moves; the rest stays at Coinbase.'],
+ ['failed','Coinbase didn’t send this coin, so it never left your Coinbase account. Tap Retry while your move is in progress. Coins already credited stay credited.'],
+ ['code','Coinbase’s code expired before it was entered. Retry and Coinbase sends a new code.'],
+ ['balance','Your SOL balance at Coinbase changed after you approved. Retry moves what’s there now.'],
+ ['slow','The network is slower than usual. Your coin is on its way; there’s nothing you need to do.'],
+ ['looking','Something unexpected happened with this coin. Northwind support has a case open for your move.'],
+ ['held','We’re checking this coin before it can be credited. If it can’t be credited, it’s returned to an address you give.']
+];
+const ST={pending:['Queued','clock'],twofa:['Two-factor pending','lock'],submitted:['Sending','send'],confirming:['Sending','spin'],match:['Checking account name','user'],credited:['Credited','check'],scheduled:['On hold · ETA','cal'],capped:['Capped','alert'],failed:['Didn’t leave Coinbase · Retry','x'],code:['Enter Coinbase’s code to send SOL','lock'],balance:['Your SOL balance changed','alert'],slow:['Taking longer than usual','clock'],looking:['We’re looking into SOL','info'],held:['Held for review','shield']};
+const pill=(k,t,cls)=>`<span class="pill p-${k}${cls?' '+cls:''}">${ic(ST[k][1],14,2)}${t||ST[k][0]}</span>`;
+const mono=(t,tint,s=38)=>`<span class="mono" style="width:${s}px;height:${s}px;background:${tint}" aria-hidden="true">${t}</span>`;
+const FOOT='<p class="foot">Concept prototype by Vik Bharadwaj. Not a zerohash product.</p>';
+const NOTE=(k,i,h,t)=>`<div class="note ${k}">${ic(i,20)}<div>${h?`<b>${h}</b>`:''}${t}</div></div>`;
+
+/* ---------- state ---------- */
+let S,timer=null,toastT=null;
+function fresh(l){S={level:l,open:false,screen:null,hist:[],tick:0,rel:false,relT:0,d:{},modal:null,done:null,seen:null};}
+const lvl=()=>CFG[S.level];
+
+function movers(){
+ const c=lvl(),sel=S.d.sel||ORDER.slice();let now=[],later=[];
+ ORDER.forEach(k=>{if(!sel.includes(k))return;if(k==='USDC'&&c.hold)later.push(k);else now.push(k)});
+ if(S.d.sellZ&&c.opt)now.push('ZORB');
+ return {now,later};
+}
+const allMovers=()=>{const m=movers();return m.now.concat(m.later)};
+const TL={slow:{ETH:[0,2,5,8],BTC:[1,4,10,15],SOL:[1,3,7,11],ZORB:[2,4,6,9],USDC:[0,2,4,6]},fast:{BTC:[0,1,3,5],ETH:[0,1,3,4],SOL:[0,1,2,3],USDC:[0,1,3,4],ZORB:[0,1,2,3]}};
+function ts(c){
+ const cfg=lvl();let t=S.tick;let T;
+ if(S.level===11)T=TL.fast[c];
+ else if(c==='USDC'&&cfg.hold){if(!S.rel)return {st:'scheduled',idx:0,note:'Likely exchange hold. Estimated ETA ~2 days.'};t=S.tick-S.relT;T=TL.slow.USDC}
+ else if(c==='SOL'&&S.level===5&&MODE5==='fail'&&S.d.solFail){if(S.d.solRetryT==null)return {st:'failed',idx:0,note:'Coinbase’s code expired, so SOL never left Coinbase. Nothing was lost.',retry:true};t=S.tick-S.d.solRetryT;T=TL.slow.SOL}
+ else T=(cfg.partner?TL.fast:TL.slow)[c];
+ const [sb,cf,nm,cr]=T;
+ if(t>=cr&&c==='SOL'&&S.level===5&&MODE5==='held')return {st:'held',idx:3,note:'We’re checking SOL before it’s credited. If it can’t be credited, it’s returned to an address you give.'};
+ if(t>=cr)return {st:'credited',idx:4,note:'Available in Northwind at '+(c==='USDC'&&cfg.hold?'Sun, Nov 1 · 9:14 AM':C[c].credit)};
+ if(t>=nm)return {st:'match',idx:3,note:'Funds stay unavailable until the name matches.'};
+ if(t>=cf)return {st:'confirming',idx:2,note:'Waiting for network confirmations.'};
+ if(t>=sb)return {st:'submitted',idx:1,note:'Coinbase has the request.'};
+ return {st:'pending',idx:0,note:'Starting…'};
+}
+const TRACK=new Set(['b-track','v-track','l2-sell','l2-send','l2-buy']);
+
+/* ---------- navigation ---------- */
+function go(s,opt){if(S.screen&&!(opt&&opt.nohist))S.hist.push(S.screen);S.screen=s;S.seen=null;if(TRACK.has(s))S.tick=0;render()}
+function back(){const p=S.hist.pop();if(p){S.screen=p;S.seen=null;render()}}
+let MODE1='auth';
+/* 5★ scenario: ok = happy path; fail = SOL's Coinbase code times out (W2 failed, exchange_code_timeout); held = SOL name check fails (Held for review) */
+let MODE5='ok';
+const solFailed=()=>S.level===5&&MODE5==='fail'&&!!S.d.solFail&&S.d.solRetryT==null;
+const solHeld=()=>S.level===5&&MODE5==='held';
+const isFinal=st=>st==='credited'||st==='failed'||st==='held';
+const solOut=()=>allMovers().includes('SOL')&&(solFailed()||(solHeld()&&ts('SOL').st==='held'))?'SOL':null;
+const startOf=l=>l===1&&MODE1==='cp'?'cp-receive':START[l];
+const START={1:'l1-landing',3:'l2-intro',5:'b-landing',7:'b-landing',10:'b-landing',11:'v-track'};
+function setLevel(l,auto){
+ fresh(l);try{history.replaceState(null,'','#star-'+l)}catch(e){}
+ render();
+ if(auto!==false&&l!==11){setTimeout(()=>{if(S.level===l&&!S.screen){S.screen=startOf(l);S.open=true;render()}},260)}
+}
+function shift(dx){const i=LV.findIndex(v=>v.id===S.level);const n=LV[Math.max(0,Math.min(LV.length-1,i+dx))];if(n.id!==S.level)setLevel(n.id)}
+function toast(m){const l=$('#layer');const old=l.querySelector('.toast');if(old)old.remove();const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=m;l.appendChild(t);clearTimeout(toastT);toastT=setTimeout(()=>t.remove(),2600)}
+
+/* ---------- screen kit ---------- */
+function page(m){
+ if(m.chrome){
+  const t=m.chrome==='ex'?'<span class="exl" aria-hidden="true"></span><span class="grow">Exchange</span>':'<span class="nwl" aria-hidden="true">N</span><span class="grow">Northwind</span>';
+  return `<div class="apptb"><button class="ib" data-a="back" aria-label="Back" ${m.back===false?'style="visibility:hidden" tabindex="-1"':''}>${ic('chevL')}</button>${t}<button class="ib" data-a="close" aria-label="Close">${ic('x')}</button></div>
+ <div class="sb" id="sb">${m.body}</div><div class="sf">${m.cta||''}${FOOT}</div>`;
+ }
+ const dots=m.prog==null?'<span></span>':`<div class="dots" role="img" aria-label="Step ${m.prog+1} of 6">${[0,1,2,3,4,5].map(i=>`<i class="${i===m.prog?'on':''}"></i>`).join('')}</div>`;
+ return `<div class="tb"><button class="ib" data-a="back" aria-label="Back" ${m.back===false?'style="visibility:hidden" tabindex="-1"':''}>${ic('chevL')}</button>${dots}<button class="ib" data-a="close" aria-label="Close">${ic('x')}</button></div>
+ <div class="sb" id="sb">${m.counter?`<div class="counter">${m.counter}</div>`:''}${m.body}</div>
+ <div class="sf">${m.cta||''}${m.powered?'<p class="foot">Powered by zerohash (concept)</p>':''}${FOOT}</div>`;
+}
+const btn=(l,a,arg,k,dis)=>`<button class="btn ${k||''}" data-a="${a}" ${arg!=null?`data-arg="${esc(arg)}"`:''} ${dis?'disabled':''}>${l}</button>`;
+
+function landing(bulk){
+ const c=lvl();
+ const t=bulk?'Move your crypto in one go':'Move crypto to your Northwind account';
+ const sub=bulk?'You’re moving your crypto to your Northwind account. Several coins, nothing sold. '+(c.partner?'Nothing moves until you approve at Coinbase.':'Nothing moves until you approve your plan.'):'You’re moving your crypto to your Northwind account, one coin at a time. Nothing moves until you approve at your exchange.';
+ const ok=!!S.d.agree;
+ return {prog:0,back:false,powered:true,body:`
+  ${S.level>=7?'<span class="tag2" style="position:static;justify-self:center;align-self:center">Later phase (concept)</span>':''}
+  <div class="circle">${ic('link',34,1.4)}</div>
+  <div class="center"><h1 class="h1">${t}</h1><p class="muted" style="margin:8px 0 0">${sub}</p></div>
+  <div class="dots" style="justify-content:center" aria-hidden="true"><i class="on" style="background:var(--ink)"></i><i></i><i></i></div>
+  <div class="greycard">
+    <div class="badges"><span class="badge">N</span><span class="muted">${ic('link',18)}</span><span class="badge" style="font-size:11px">AUTH</span></div>
+    <div class="center"><b>Northwind partners with zerohash</b></div>
+    <p class="small muted center" style="margin:0">zerohash connects your exchange to Northwind so you can move crypto you own without typing addresses. ${bulk?'You only see your exchange’s own withdrawal fees.':''}</p>
+    <label class="chk"><input type="checkbox" id="agree" data-a="agree" ${ok?'checked':''}><span>I agree to the <button class="lnk" data-a="doc">User Agreement</button>, <button class="lnk" data-a="doc">Regulatory Disclosures</button>, and <button class="lnk" data-a="doc">Privacy Notice</button>.</span></label>
+  </div>`,cta:btn('Continue','landNext',null,'',!ok)};
+}
+
+const PROV=[['Coinbase','#DCE6FF'],['Robinhood','#D6F5D0'],['Gemini','#D5F2F2'],['Kraken','#E6DDFB']];
+const WAL=['Browser wallet','Mobile wallet','Hardware wallet','Smart wallet','Multi-sig vault','Self-custody'];
+function picker(onPick,opts){
+ const f=S.d.filter||'all';const c=lvl();
+ let tiles='';
+ if(f!=='wal')PROV.forEach(([n,t])=>{
+  const prev=(n==='Kraken'&&opts.preview);
+  tiles+=`<button class="tile" data-a="${onPick}" data-arg="${n}" data-name="${n.toLowerCase()}">${prev?'<span class="tag2">Preview</span>':''}${mono(n[0],t)}<span class="nm">${n}${opts.partner&&n==='Coinbase'?'':''}</span></button>`});
+ if(opts.wallets&&f!=='inst')WAL.forEach((n,i)=>{tiles+=`<button class="tile dim" data-a="wallet" data-name="${n.toLowerCase()}">${mono(n[0],'#EDEDED')}<span class="nm">${n}</span></button>`});
+ const chips=`<button class="chip" data-a="filter" data-arg="all" aria-pressed="${f==='all'}">All</button><button class="chip" data-a="filter" data-arg="inst" aria-pressed="${f==='inst'}">Institutions <small>4</small></button>${opts.wallets?`<button class="chip" data-a="filter" data-arg="wal" aria-pressed="${f==='wal'}">Wallets <small>600</small></button>`:''}`;
+ return `<div><div class="muted small">Welcome Maya,</div><h1 class="h1">Select an account</h1></div>
+  <label class="search">${ic('search',18)}<input id="q" type="search" placeholder="Search" aria-label="Search accounts"></label>
+  <div class="chips">${chips}</div>
+  <div class="grid3" id="tiles">${tiles}</div>
+  ${opts.partner?'<p class="small muted" style="margin:0">Coinbase is a partner exchange: one approval covers every coin.</p>':''}
+  <div class="secure"><div class="t"><span>${ic('shield',16)} Secured by AUTH</span>${ic('up',18)}</div>
+  <button class="btn out sm" data-a="manual">${ic('qr',18)} Deposit manually</button></div>`;
+}
+function codeBoxes(filled,err){
+ const d=filled?'481920':'';return `<div class="code ${err?'err':''}" role="img" aria-label="${filled?'Code entered':'Enter the 6-digit code'}">${[0,1,2,3,4,5].map(i=>`<i>${d[i]||''}</i>`).join('')}</div>`;
+}
+function receipt(top,rows){
+ return `<div class="rcpt"><div class="top">${top}</div>${rows.map(r=>`<div class="kv"><span>${r[0]}</span><span>${r[1]}</span></div>`).join('')}</div>`;
+}
+const copyBtn=t=>`<button data-a="copy" aria-label="Copy transaction ID">${ic('copy',15)}</button>`;
+
+/* ---------- screens ---------- */
+const SCR={};
+
+/* 1★ Today */
+const L1=['BTC','ETH','SOL','USDC'];
+const l1c=()=>L1[S.d.i||0];
+SCR['l1-landing']=()=>landing(false);
+SCR['l1-pick']=()=>({prog:1,body:picker('l1pick',{wallets:false,preview:false})});
+SCR['l1-code']=()=>{
+ const c=l1c(),exp=(c==='ETH'&&!S.d.expFixed);const filled=!!S.d.codeFilled;
+ return {prog:2,body:`
+ <div><h1 class="h1">Coinbase sign-in</h1><p class="muted small" style="margin:6px 0 0">Hosted by Coinbase. Northwind never sees your password.</p></div>
+ ${codeBoxes(filled,filled&&exp)}
+ ${filled&&exp?NOTE('err','alert','This code expired','Codes last 30 seconds. Ask Coinbase for a new one and enter it right away.'):''}
+ ${!filled?`<button class="autofill" data-a="l1fill">${ic('send',16)} <span>From Messages <small>481 920</small></span></button>`:''}
+ `,cta:filled&&exp?btn('Send a new code','l1newcode'):btn('Verify','l1verify',null,'',!filled)};
+};
+SCR['l1-amount']=()=>{
+ const c=l1c(),d=C[c];const amt=S.d.amt||'0';const n=parseFloat(amt)||0;const q=n/d.usd*d.qty;const over=n>d.usd;
+ const solWarn=c==='SOL';
+ const blocked=n<=0||over||(solWarn&&!S.d.netOk);
+ return {prog:3,body:`
+ <div class="center"><span class="mono" style="margin:0 auto;background:${d.tint}">${c[0]}</span></div>
+ <h1 class="h2 center">Enter amount to deposit</h1>
+ <div class="amt tabular" aria-live="polite">$${amt}</div>
+ <div class="coinline">${q.toLocaleString('en-US',{minimumFractionDigits:d.dec,maximumFractionDigits:d.dec})} ${c} ${ic('swap',16)}</div>
+ <div class="center small muted">Available: ${qtyStr(c,d.qty)} (${money(d.usd)})${over?' · <b style="color:var(--err)">Above your balance</b>':''}<br>Coinbase fee about ${money(d.fee)}</div>
+ ${solWarn?`<div class="note warn">${ic('alert',20)}<div><b>Check the network</b>Coinbase sends SOL on Solana. Send it on any other network and it is lost.<label class="chk" style="margin-top:8px"><input type="checkbox" data-a="netok" ${S.d.netOk?'checked':''}> <span>I checked: Solana</span></label></div></div>`:''}
+ <div class="pcts"><button class="chip" data-a="pct" data-arg="0.1">10%</button><button class="chip" data-a="pct" data-arg="0.5">50%</button><button class="chip" data-a="pct" data-arg="1">Max</button></div>
+ <div class="keypad">${['1','2','3','4','5','6','7','8','9','.','0','⌫'].map(k=>`<button data-a="key" data-arg="${k}" aria-label="${k==='⌫'?'Delete':k}">${k}</button>`).join('')}</div>`,
+ cta:btn('Continue','l1amt',null,'',blocked)};
+};
+SCR['l1-review']=()=>{
+ const c=l1c(),d=C[c];const n=parseFloat(S.d.amt)||0;const q=n/d.usd*d.qty;
+ return {prog:4,body:`
+ <div><h1 class="h1">Review</h1><p class="muted small" style="margin:6px 0 0">Nothing moves until you approve at Coinbase.</p></div>
+ ${receipt(`<span class="muted small">You’re moving</span><b>${money(n)}</b>`,[['Coin',d.n],['Amount',qtyStr(c,q)],['Network',d.net],['Exchange fee',money(d.fee)+' · includes network'],['From','Coinbase']])}`,
+ cta:btn('Approve','l1approve')};
+};
+SCR['l1-success']=()=>{
+ const c=l1c(),d=C[c];const n=parseFloat(S.d.amt)||d.usd;const q=n/d.usd*d.qty;
+ const hold=c==='USDC'&&!S.d.usdcDone;const last=(S.d.i||0)===3;
+ return {prog:5,powered:true,body:`
+ <div class="circle ok">${ic(hold?'cal':'check',34,2)}</div>
+ <div class="center"><h1 class="h1">${hold?'Scheduled':'Success'}</h1><p class="muted" style="margin:6px 0 0">${hold?`Coinbase holds new addresses for 48 hours. ${qtyStr(c,q)} will arrive ${HOLD_ETA}.`:`You deposited ${qtyStr(c,q)} from Coinbase.`}</p></div>
+ <div class="center">${pill(hold?'scheduled':'credited')}</div>
+ ${receipt(`<span class="muted small">Oct 30, 2026</span><b>${money(n)}</b>`,[['You deposited',qtyStr(c,q)],['Transaction fee',money(d.fee)],['Network',d.net],['Exchange rate','1 '+c+' = '+money(d.usd/d.qty)],['Deposited from','Coinbase'],['Transaction ID',`${d.tx} ${copyBtn()}`]])}
+ <a class="lnk small center" href="#star-1" data-a="explorer" style="text-align:center;font-weight:600">View on Block Explorer ${ic('ext',12)}</a>`,
+ cta:btn(last?'Finish':'Next transfer','l1next',null,'out')};
+};
+SCR['l1-end']=()=>({prog:5,back:false,powered:true,body:`
+ <div class="circle ok">${ic('check',34,2)}</div>
+ <div class="center"><h1 class="h1">Four transfers done</h1><p class="muted" style="margin:6px 0 0">It took four trips through the same flow.</p></div>
+ <div class="greycard">${[['Transfers','4'],['Codes entered','5 (one expired)'],['Network warnings','1'],['Still waiting','USDC, until '+HOLD_ETA]].map(r=>`<div class="kv" style="padding:0;border:0"><span>${r[0]}</span><span>${r[1]}</span></div>`).join('')}</div>
+ <h2 class="h2">Left behind at Coinbase</h2>
+ <div class="item off">${mono('D',C.DOGE.tint)}<div class="grow"><div class="nm">Dogecoin · 11.4 DOGE</div><div class="sub">Too small to send: Coinbase minimum is $10.</div></div></div>
+ <div class="item off">${mono('Z',C.ZORB.tint)}<div class="grow"><div class="nm">Zorbcoin · 820 ZORB</div><div class="sub">Northwind doesn’t list this coin.</div></div></div>`,
+ cta:btn('Done','finish',null,'out')});
+
+/* 3★ Shortcut */
+const SELL=['BTC','ETH','SOL','USDC','DOGE','ZORB'];
+SCR['l2-intro']=()=>({prog:null,back:false,body:`
+ <div class="circle">${ic('bolt',32,1.5)}</div>
+ <div class="center"><h1 class="h1">Sell everything, send once</h1><p class="muted" style="margin:8px 0 0">One transfer instead of four. It works by selling first.</p></div>
+ <div class="sl">${[['Sell','Every coin at Coinbase turns into USDC.'],['Send','One USDC transfer to Northwind.'],['Buy back','Northwind buys the coins again.']].map((r,i)=>`<div class="item"><span class="mono" style="background:var(--g1)">${i+1}</span><div class="grow"><div class="nm">${r[0]}</div><div class="sub">${r[1]}</div></div></div>`).join('')}</div>`,
+ cta:btn('Sell and send','go',  'l2-sell')});
+SCR['l2-sell']=()=>{
+ const t=S.tick;const done=t>=SELL.length+1;
+ return {prog:null,counter:'Step 1 of 3 · Selling',body:`
+ <h1 class="h2">Selling into USDC</h1>
+ <div class="sl">${SELL.map((c,i)=>{const sold=t>i;const d=C[c];return `<div class="item">${mono(c[0],d.tint)}<div class="grow"><div class="nm">${d.n}</div><div class="sub ${sold?'':'sold'}" style="text-decoration:none">${sold?'Sold at market, 0.5% spread':'Waiting…'}</div></div><div class="r">${sold?money(d.usd*0.995):'<span class="muted">…</span>'}</div></div>`}).join('')}</div>
+ <div class="note info">${ic('info',20)}<div>Spread cost so far: <b style="display:inline">${money(SELL.reduce((a,c,i)=>a+(t>i?C[c].usd*0.005:0),0))}</b></div></div>`,
+ cta:btn('Continue','go','l2-send',null,!done)};
+};
+SCR['l2-send']=()=>{
+ const t=S.tick,done=t>=4;
+ return {prog:null,counter:'Step 2 of 3 · Sending',body:`
+ <h1 class="h2">One transfer to Northwind</h1>
+ <div class="card" style="border:1px solid var(--g2)"><div class="row"><div class="grow"><div class="muted small">Sending</div><div class="big" style="font-size:26px">9,011.83 USDC</div></div>${pill(done?'credited':t>=2?'confirming':'submitted')}</div>
+ <div class="bar" style="margin-top:12px" role="progressbar" aria-valuenow="${Math.min(100,t*25)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${Math.min(100,t*25)}%"></i></div></div>
+ <div class="kv" style="padding:0;border:0"><span>Transaction fee</span><span>$1.00</span></div>`,
+ cta:btn('Continue','go','l2-buy',null,!done)};
+};
+SCR['l2-buy']=()=>{
+ const t=S.tick;const B=['BTC','ETH','SOL'];const done=t>=B.length+1;
+ return {prog:null,counter:'Step 3 of 3 · Buying back',body:`
+ <h1 class="h2">Buying your coins back</h1>
+ <div class="sl">${B.map((c,i)=>{const d=C[c],b=t>i;return `<div class="item">${mono(c[0],d.tint)}<div class="grow"><div class="nm">${d.n}</div><div class="sub">${b?'Bought at market, 0.5% spread. New cost basis: today.':'Waiting…'}</div></div><div class="r">${b?money(d.usd*0.995):'…'}</div></div>`}).join('')}
+ <div class="item off">${mono('Z',C.ZORB.tint)}<div class="grow"><div class="nm">Zorbcoin</div><div class="sub">Northwind doesn’t list it, so it can’t be bought back. It stays as cash.</div></div></div></div>`,
+ cta:btn('See the result','go','l2-warn',null,!done)};
+};
+SCR['l2-warn']=()=>({prog:null,back:false,powered:false,body:`
+ <div class="circle" style="background:var(--warnbg)"><span style="color:var(--warn)">${ic('alert',34,1.6)}</span></div>
+ <div class="center"><h1 class="h1">It worked. It cost you.</h1></div>
+ <div class="note warn">${ic('alert',20)}<div><b>Taxable sale · trading spreads · original positions gone.</b>Six positions were sold at Coinbase and four bought again, so gains and losses are realized and the cost basis restarts today.</div></div>
+ ${receipt(`<span class="muted small">Illustrative example</span><b>−${money(85.14)}</b>`,[['Value before','$9,058.12'],['Value after','$8,972.98'],['Spreads and fees','$85.14'],['Taxable gain (example)','$1,412.00'],['Positions kept','3 of 6']])}`,
+ cta:btn('Done','finish',null,'out')});
+
+/* bulk flow */
+SCR['b-landing']=()=>landing(true);
+SCR['b-pick']=()=>{const c=lvl();return {prog:1,body:picker('bpick',{wallets:c.wallets,preview:true,partner:c.partner})}};
+SCR['b-signin']=()=>({prog:2,body:`
+ <div class="note info">${ic('lock',20)}<div><b>Hosted by Coinbase</b>You are signing in on Coinbase. Northwind never sees your password.</div></div>
+ <div class="card" style="border:1px solid var(--g2);display:grid;gap:12px;text-align:center"><div class="h2">Coinbase</div><div class="muted small">Sign in to choose what you move to your Northwind account</div>
+ <div class="item"><span class="grow" style="text-align:left">maya.lin@example.com</span></div><div class="item"><span class="grow" style="text-align:left">••••••••••••</span></div></div>`,
+ cta:btn('Sign in to Coinbase','bsign')});
+SCR['b-2fa']=()=>({prog:2,body:`
+ <div><h1 class="h1">Enter Coinbase’s code</h1><p class="muted small" style="margin:6px 0 0">Coinbase sent a code to your phone ending in 42.</p></div>
+ ${codeBoxes(!!S.d.codeFilled)}
+ ${!S.d.codeFilled?`<button class="autofill" data-a="bfill2fa">${ic('send',16)} <span>From Messages <small>481 920</small></span></button>`:`<div class="center">${pill('credited').replace('Credited','Code accepted')}</div>`}`,
+ cta:btn('Verify','bverify',null,'',!S.d.codeFilled)});
+
+function choose(){
+ const c=lvl();const sel=S.d.sel||(S.d.sel=ORDER.slice());
+ const tot=sel.reduce((a,k)=>a+C[k].usd,0);const all=sel.length===ORDER.length;
+ const rows=ORDER.map(k=>{const d=C[k];return `<label class="item"><input class="cb" type="checkbox" data-a="selcoin" data-arg="${k}" ${sel.includes(k)?'checked':''} aria-label="Move ${d.n}">${mono(k[0],d.tint)}<div class="grow"><div class="nm">${d.n}</div><div class="sub tabular">${qtyStr(k,d.qty)}</div></div><div class="r">${money(d.usd)}</div></label>`}).join('');
+ const off=`<div class="item off"><input class="cb" type="checkbox" disabled aria-label="Dogecoin can’t be moved">${mono('D',C.DOGE.tint)}<div class="grow"><div class="nm">Dogecoin</div><div class="sub">Dust: the fee is bigger than the coin.</div></div><div class="r">$3.12</div></div>`;
+ const zorb=c.opt?`<div class="item" style="flex-wrap:wrap"><input class="cb" type="checkbox" disabled aria-label="Zorbcoin can’t be moved">${mono('Z',C.ZORB.tint)}<div class="grow"><div class="nm">Zorbcoin</div><div class="sub">Not supported by Northwind.</div></div><div class="r">$85.00</div>
+  <div style="flex-basis:100%;border-top:1px solid var(--g2);padding-top:10px;display:flex;gap:12px;align-items:center"><div class="grow small"><b>Sell ZORB at Coinbase and move the cash</b><div class="muted">Opt in. This is a taxable sale.</div></div><input class="sw" type="checkbox" role="switch" data-a="sellz" aria-label="Sell Zorbcoin and move the cash" ${S.d.sellZ?'checked':''}></div>
+  ${S.d.sellZ?`<div style="flex-basis:100%">${NOTE('warn','alert','Tax notice','Selling is a taxable event. You will owe tax on any gain. Coinbase reports the sale; Northwind receives only the cash.')}</div>`:''}</div>`
+  :`<div class="item off"><input class="cb" type="checkbox" disabled aria-label="Zorbcoin can’t be moved">${mono('Z',C.ZORB.tint)}<div class="grow"><div class="nm">Zorbcoin</div><div class="sub">Not supported by Northwind.</div></div><div class="r">$85.00</div></div>`;
+ return {prog:3,body:`
+ <div><h1 class="h1">Choose what to move</h1><p class="muted small" style="margin:6px 0 0">Coins Northwind supports are selected. Untick any coin to leave it at Coinbase. Nothing is sold.</p></div>
+ <div class="sec"><span>Your Coinbase balances</span><button class="lnk" data-a="selall" style="text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink)">${all?'Clear all':'Select all'}</button></div>
+ ${rows}${off}${zorb}`,
+ cta:btn(`Continue · ${money(tot)}`,'go','b-plan',null,!sel.length)};
+}
+SCR['b-choose']=choose;
+
+function planRow(k,right){const d=C[k];const c=lvl();return `<div class="item">${mono(k[0],d.tint)}<div class="grow"><div class="nm">${d.n} <span class="muted tabular" style="font-weight:500">${qtyStr(k,d.qty)}</span></div><div class="sub">Network: ${d.net} · ${c.covered?'Withdrawal fee covered by Northwind':'Exchange withdrawal fee (includes network) '+money(d.fee)}</div></div><div class="r">${right||money(d.usd)}</div></div>`}
+SCR['b-plan']=()=>{
+ const c=lvl();const sel=S.d.sel||ORDER;const m=movers();
+ const notSel=ORDER.filter(k=>!sel.includes(k));
+ const behind=[];
+ notSel.forEach(k=>behind.push([k,'You left this coin out.']));
+ behind.push(['DOGE','Dust: the fee is bigger than the coin.']);
+ if(!(c.opt&&S.d.sellZ))behind.push(['ZORB','Not supported by Northwind.']);
+ const nowRows=m.now.map(k=>k==='ZORB'?`<div class="item">${mono('Z',C.ZORB.tint)}<div class="grow"><div class="nm">Zorbcoin → cash</div><div class="sub">Sold at Coinbase (taxable), cash moves as USDC · Network: Ethereum (ERC-20) · ${c.covered?'Withdrawal fee covered by Northwind':'Exchange withdrawal fee (includes network) $1.00'}</div></div><div class="r">$85.00</div></div>`:planRow(k)).join('');
+ const laterRows=m.later.map(k=>`<div class="item">${mono(k[0],C[k].tint)}<div class="grow"><div class="nm">${C[k].n} <span class="muted tabular" style="font-weight:500">${qtyStr(k,C[k].qty)}</span></div><div class="sub">Likely exchange hold · estimated ETA ~2 days. Network: ${C[k].net} · ${c.covered?'Withdrawal fee covered by Northwind':'Exchange withdrawal fee (includes network) '+money(C[k].fee)}</div></div><div class="r">${money(C[k].usd)}</div></div>`).join('');
+ return {prog:3,body:`
+ <div><h1 class="h1">Your move plan</h1><p class="muted small" style="margin:6px 0 0">Checked against Northwind’s coin list, limits, and networks before you approve. Read-only.</p></div>
+ <div class="sec"><span>Moves now · ${m.now.length} · ${money(m.now.reduce((a,k)=>a+C[k].usd,0))}</span><span class="pill p-pending">${ic('clock',14,2)}Ready</span></div>${nowRows||'<p class="muted small">Nothing selected to move now.</p>'}
+ ${m.later.length?`<div class="sec"><span>Moves later · ${m.later.length} · ${money(m.later.reduce((a,k)=>a+C[k].usd,0))}</span>${pill('scheduled')}</div>${laterRows}`:''}
+ <div class="sec"><span>Stays · ${behind.length} · ${money(behind.reduce((a,[k])=>a+C[k].usd,0))}</span></div>
+ ${behind.map(([k,r])=>`<div class="item off">${mono(k[0],C[k].tint)}<div class="grow"><div class="nm">${C[k].n}</div><div class="sub">${r}</div></div><div class="r">${money(C[k].usd)}</div></div>`).join('')}
+ ${c.covered?'':`<div class="hold-row" style="border:0"><span>Total exchange withdrawal fees</span><b class="tabular">${money(movers().now.concat(movers().later).reduce((a,k)=>a+(k==='ZORB'?1:C[k].fee),0))}</b></div>`}`,
+ cta:btn('Review','go','b-review')};
+};
+SCR['b-review']=()=>{
+ const c=lvl();const m=movers();const all=m.now.concat(m.later);
+ const nowT=m.now.reduce((a,k)=>a+C[k].usd,0),lateT=m.later.reduce((a,k)=>a+C[k].usd,0);
+ const fees=all.reduce((a,k)=>a+(k==='ZORB'?1:C[k].fee),0);
+ return {prog:3,body:`
+ <div><h1 class="h1">Review</h1></div>
+ <div class="card" style="border:1px solid var(--g2);display:grid;gap:8px">
+  <div class="row"><div class="grow"><div class="lbl">MOVING NOW</div><div class="big" style="font-size:26px">${money(nowT)}</div></div>${lateT?`<div class="grow" style="text-align:right"><div class="lbl">MOVING LATER</div><div class="big" style="font-size:26px">${money(lateT)}</div></div>`:''}</div>
+  <div class="note ok" style="padding:8px 12px">${ic('check',18,2)}<div><b style="margin:0">${c.opt&&S.d.sellZ?'Only Zorbcoin is sold (your choice)':'Nothing is sold'}</b></div></div></div>
+ <div class="sec"><span>${c.covered?'Fees':'Exchange withdrawal fees (include network)'}</span></div>
+ <div class="card" style="padding:4px 16px">${c.covered?`<div class="hold-row"><span>Exchange withdrawal fees</span><b style="color:var(--oktxt)">Covered by Northwind</b></div>${c.wallets?`<div class="hold-row"><span>Wallet network fees</span><b style="color:var(--oktxt)">Paid by zerohash</b></div>`:''}<div class="hold-row"><span>Fees to you</span><b>${money(0)}</b></div><p class="small muted" style="margin:0 0 8px">Northwind chose to cover exchange withdrawal fees.</p>`:all.map(k=>`<div class="hold-row"><span>${C[k].n}</span><b class="tabular">${money(k==='ZORB'?1:C[k].fee)}</b></div>`).join('')+`<div class="hold-row"><span>Total</span><b class="tabular">${money(fees)}</b></div>`}</div>
+ <div class="note info">${ic('user',20)}<div><b>Account name check</b>AUTH checks that the Coinbase name matches your Northwind account before each coin is credited.</div></div>
+ ${c.basis==='import'?`<div class="card" style="border:1px solid var(--g2)"><div class="row"><div class="grow"><b>Cost basis imported from Coinbase</b><div class="small muted">Review what Northwind will use for tax reporting.</div></div><button class="chip" data-a="basis" aria-expanded="${!!S.d.basisOpen}">Review</button></div>${S.d.basisOpen?`<div style="margin-top:10px">${all.filter(k=>k!=='ZORB').map(k=>`<div class="hold-row"><span>${k}</span><span class="muted">Acquired at Coinbase · basis imported</span></div>`).join('')}</div>`:''}</div>`:`<div class="note warn">${ic('info',20)}<div><b>Before you approve</b><ul class="risks" style="margin-top:4px"><li>Moving isn’t selling.</li><li>Cost basis doesn’t transfer; Northwind will report these coins without it.</li><li>Transfers can’t be reversed.</li><li>Times are estimates.</li></ul></div></div>`}
+ ${c.basis==='import'?NOTE('info','info','Transfers can’t be reversed. Times are estimates.','Check the plan once more. After you approve, coins start moving.'):''}
+ <label class="chk"><input type="checkbox" data-a="ack" ${S.d.ack?'checked':''}><span><b>I understand</b></span></label>
+ `,cta:`<div class="slide${S.d.ack?'':' off'}" id="slide" role="button" tabindex="${S.d.ack?0:-1}" aria-disabled="${!S.d.ack}" aria-label="Slide to approve once. Press Enter to approve."><div class="fill" id="sfill"></div><span>Approve once</span><div class="knob" id="knob">${ic('arrow',22,2)}</div></div><p class="small muted center" style="margin:0">${c.partner?'After you approve, Coinbase asks for one code for all your coins.':'You approve once here. Coinbase may then ask for its code for each coin.'}</p>`};
+};
+SCR['b-code']=()=>{
+ const m=movers().now;const i=S.d.ci||0;const k=m[i];const d=C[k];
+ const tout=S.level===5&&MODE5==='fail'&&k==='SOL';
+ if(tout&&!S.d.solArm){S.d.solArm=true;const s0=S;setTimeout(()=>{if(S!==s0||S.screen!=='b-code')return;S.d.solFail=true;render()},2200)}
+ if(tout&&S.d.solFail)return {prog:4,back:false,body:`
+ <div class="note info">${ic('lock',20)}<div><b>Coinbase needs a code for each withdrawal: ${i+1} of ${m.length}</b>Largest coin first.</div></div>
+ <div class="item">${mono(k[0],d.tint)}<div class="grow"><div class="nm">${d.n}</div><div class="sub">${pill('failed','Didn’t leave Coinbase')}</div></div><div class="r">${money(d.usd)}</div></div>
+ ${codeBoxes(false,true)}
+ ${NOTE('err','alert','Coinbase’s code expired','SOL didn’t leave Coinbase, so nothing was lost. You can retry SOL while your other coins move.')}
+ ${m.map((q,j)=>`<div class="hold-row"><span>${C[q].n}</span><span>${j<i?'Code accepted':j===i?'Code expired':'Next'}</span></div>`).join('')}`,
+ cta:btn(i+1<m.length?'Continue with the next coin':'See my move','solskip')};
+ return {prog:4,back:false,body:`
+ <div class="note info">${ic('lock',20)}<div><b>Coinbase needs a code for each withdrawal: ${i+1} of ${m.length}</b>Largest coin first.</div></div>
+ <div class="item">${mono(k[0],d.tint)}<div class="grow"><div class="nm">${k==='ZORB'?'Zorb cash sale':d.n}</div><div class="sub">${pill('twofa')}</div></div><div class="r">${money(d.usd)}</div></div>
+ ${codeBoxes(!!S.d.codeFilled)}
+ ${tout?`<p class="small muted center" style="margin:0">Waiting for Coinbase’s code…</p>`:!S.d.codeFilled?`<button class="autofill" data-a="bcode">${ic('send',16)} <span>From Messages <small>${481920+i*37}</small></span></button>`:`<div class="center">${pill('submitted')}</div>`}
+ ${m.map((q,j)=>`<div class="hold-row"><span>${C[q].n}</span><span>${j<i?'Code accepted':j===i?'Waiting for code':'Next'}</span></div>`).join('')}`};
+};
+SCR['b-batch']=()=>{
+ const mv=allMovers();
+ return {prog:4,back:false,body:`
+ <div><h1 class="h1">Approve at Coinbase</h1><p class="muted small" style="margin:6px 0 0">Coinbase is a partner exchange: one code approves all ${mv.length} coins.</p></div>
+ <div class="sl">${mv.map(k=>`<div class="item">${mono(k[0],C[k].tint)}<div class="grow"><div class="nm">${k==='ZORB'?'Zorbcoin → cash':C[k].n}</div></div><div class="r">${money(C[k].usd)}</div></div>`).join('')}</div>
+ ${codeBoxes(!!S.d.codeFilled)}
+ ${!S.d.codeFilled?`<button class="autofill" data-a="bbatch">${ic('send',16)} <span>From Messages <small>481 920</small></span></button>`:`<div class="center">${pill('credited','Approved for all coins')}</div>`}`};
+};
+SCR['b-track']=()=>{
+ const c=lvl();const mv=allMovers();const rows=mv.map(k=>({k,...ts(k)}));
+ const nDone=rows.filter(r=>r.st==='credited').length;const done=rows.every(r=>isFinal(r.st));const open=rows.filter(r=>!isFinal(r.st)).length;
+ const head=c.partner?`You approved at Coinbase with one code for all ${mv.length} coins. They’re moving to your Northwind account.`:'You approved your plan once. Coinbase asked for its code for each coin. Your coins are moving to your Northwind account.';
+ return {prog:5,back:false,body:`
+ <div><h1 class="h1">Moving ${mv.length} coins</h1><p class="muted small" style="margin:6px 0 0">${head}</p></div>
+ <div class="note ok" style="padding:10px 12px">${ic('info',18)}<div>You can leave this screen. Your coins will keep moving.</div></div>
+ <div><div class="bar" role="progressbar" aria-valuenow="${nDone}" aria-valuemin="0" aria-valuemax="${mv.length}" aria-label="${nDone} of ${mv.length} credited"><i style="width:${nDone/mv.length*100}%;background:var(--ok)"></i></div></div>
+ <div class="sec"><span>${nDone} of ${mv.length} credited</span><button class="lnk" data-a="statuses" style="text-transform:none;letter-spacing:0;font-size:12.5px;color:var(--ink)">What do these mean?</button></div>
+ ${rows.map(r=>{const d=C[r.k];const lbl=r.k==='ZORB'?'Zorbcoin → cash':d.n;return `<div class="item" style="align-items:flex-start">${mono(r.k[0],d.tint)}<div class="grow"><div class="row" style="justify-content:space-between;align-items:flex-start"><div class="nm">${lbl}</div>${pill(r.st,r.st==='failed'?'Didn’t leave Coinbase':null)}</div><div class="sub">${qtyStr(r.k,d.qty)} · ${r.note}</div>${r.retry&&!done?`<button class="btn out sm" data-a="retrysol" style="margin-top:8px">${ic('restart',16)} Retry SOL</button>`:''}<div class="prog" aria-hidden="true">${[1,2,3,4].map(n=>`<i class="${r.idx>=n?'on':''}"></i>`).join('')}</div></div></div>`}).join('')}
+ ${done&&solFailed()?NOTE('warn','info','Your move is finished','SOL didn’t leave Coinbase. To move it, start a new move.'):''}`,
+ cta:done?btn('View receipt','go','b-success'):`<button class="btn" disabled>Waiting for ${open} to land</button><button class="btn ghost" data-a="close">Leave this screen</button>`};
+};
+SCR['b-success']=()=>{
+ const c=lvl();const out=solOut();const mv=allMovers().filter(k=>k!==out);const tot=mv.reduce((a,k)=>a+C[k].usd,0);
+ const held=out&&MODE5==='held';const rdate=(c.hold&&mv.includes('USDC'))?'Oct 30 – Nov 1, 2026':'Oct 30, 2026';
+ const behind=[];if(!(c.opt&&S.d.sellZ))behind.push(['ZORB','Not supported by Northwind.']);behind.push(['DOGE','Dust: the fee is bigger than the coin.']);
+ (S.d.sel?ORDER.filter(k=>!S.d.sel.includes(k)):[]).forEach(k=>behind.push([k,'You left this coin out.']));
+ return {prog:5,back:false,powered:true,body:`
+ ${out?`<div class="circle" style="background:var(--warnbg)"><span style="color:var(--warn)">${ic('alert',34,1.6)}</span></div>
+ <div class="center"><h1 class="h1">${mv.length} moved; ${held?'SOL is held for review':'SOL didn’t'}</h1><p class="muted" style="margin:6px 0 0">${held?'We’re checking SOL before it can be credited. If it can’t be, it’s returned to an address you give.':'SOL never left Coinbase, so nothing was lost. To move it, start a new move.'}</p></div>`
+ :`<div class="circle ok">${ic('check',34,2)}</div>
+ <div class="center"><h1 class="h1">Success</h1><p class="muted" style="margin:6px 0 0">${mv.length} coins moved from Coinbase to Northwind.</p></div>`}
+ <div class="rcpt"><div class="top"><span class="muted small">${rdate}</span><b>${money(tot)}</b></div>
+ ${mv.map(k=>{const d=C[k];const t=(k==='USDC'&&c.hold)?'Sun, Nov 1 · 9:14 AM':c.partner?'9:44 AM':d.credit;return `<div class="grp"><span>${k==='ZORB'?'Zorbcoin → cash':d.n}</span>${pill('credited')}</div>
+  <div class="kv"><span>You moved</span><span>${k==='ZORB'?'$85.00 as USDC':qtyStr(k,d.qty)}</span></div><div class="kv"><span>Network</span><span>${k==='ZORB'?'Ethereum (ERC-20)':d.net}</span></div><div class="kv"><span>Exchange withdrawal fee</span><span>${c.covered?'Covered by Northwind':money(k==='ZORB'?1:d.fee)}</span></div><div class="kv"><span>Credited</span><span>${t}</span></div><div class="kv"><span>Transaction ID</span><span>${d.tx} ${copyBtn()}</span></div>`}).join('')}
+ ${out?`<div class="grp"><span>Solana</span>${held?pill('held'):pill('failed','Didn’t leave Coinbase')}</div><div class="kv"><span>Amount</span><span>${qtyStr('SOL',C.SOL.qty)}</span></div><div class="kv"><span>Where it is</span><span>${held?'Held for review':'Still at Coinbase'}</span></div><div class="kv"><span>Next step</span><span>${held?'We’ll ask where to return it if it can’t be credited':'Start a new move for SOL'}</span></div>`:''}
+ <div class="grp"><span>Checks</span></div><div class="kv"><span>Account name matched</span><span>${held?'BTC, ETH, USDC':`${ic('check',14,2)} Yes`}</span></div><div class="kv"><span>Travel Rule info sent</span><span>${ic('check',14,2)} Yes</span></div>
+ <div class="grp"><span>Stayed at Coinbase</span></div>${behind.map(([k,r])=>`<div class="kv"><span>${C[k].n}</span><span style="font-weight:500">${r}</span></div>`).join('')}</div>
+ ${c.basis==='import'?NOTE('ok','check','Tax info saved','Cost basis was imported from Coinbase. Units and transfer-in date are saved for Northwind.'):NOTE('warn','info','Tax info saved for Northwind','Units and transfer-in date. Cost basis didn’t transfer.')}
+ <a class="lnk small" href="#star-${S.level}" data-a="explorer" style="text-align:center;font-weight:600">View on Block Explorer ${ic('ext',12)}</a>`,
+ cta:(out&&!held?btn('Start a new move for SOL','solnew'):'')+btn('Done','finish',null,'out')};
+};
+
+/* 11★ Vision */
+SCR['v-track']=()=>{
+ const mv=['BTC','ETH','SOL','USDC'];const rows=mv.map(k=>({k,...ts(k)}));const nDone=rows.filter(r=>r.st==='credited').length;
+ return {prog:null,back:false,body:`
+ <div><h1 class="h1">Moving your crypto</h1><p class="muted small" style="margin:6px 0 0">You approved at Coinbase. You’re moving your crypto to your Northwind account: AUTH is moving all 4 coins now.</p></div>
+ <div class="sec"><span>${nDone} of 4 landed</span></div>
+ ${rows.map(r=>{const d=C[r.k];return `<div class="item" style="align-items:flex-start">${mono(r.k[0],d.tint)}<div class="grow"><div class="row" style="justify-content:space-between;align-items:flex-start"><div class="nm">${d.n}</div>${pill(r.st)}</div><div class="sub">${qtyStr(r.k,d.qty)}</div><div class="prog" aria-hidden="true">${[1,2,3,4].map(n=>`<i class="${r.idx>=n?'on':''}"></i>`).join('')}</div></div></div>`}).join('')}`,
+ cta:`<button class="btn" disabled>Moving…</button>`};
+};
+SCR['v-success']=()=>({prog:null,back:false,powered:true,body:`
+ <div class="circle ok">${ic('check',34,2)}</div>
+ <div class="center"><h1 class="h1">Done</h1><p class="muted" style="margin:6px 0 0">Your crypto is in Northwind. Nothing was sold. Network fees covered.</p></div>
+ ${receipt(`<span class="muted small">Oct 30, 2026</span><b>${money(8970)}</b>`,[['Moved','BTC, ETH, SOL, USDC'],['Account name','Matched'],['Fees to you','$0.00'],['Time','4 minutes'],['Left at Coinbase','Dogecoin (too small)']])}
+ ${NOTE('info','info','Cost basis imported from Coinbase','Review it any time in Tax info.')}`,
+ cta:btn('Done','finish',null,'out')});
+
+/* 1★ Today, copy-paste: Northwind address → exchange app, one coin at a time */
+const CPC=['BTC','ETH','SOL','USDC'];
+const CP={
+ BTC:{nets:['Lightning','Bitcoin','BNB Smart Chain'],ok:'Bitcoin',min:'0.0001 BTC',addr:'bc1q-example-nw-maya-7k2d',tag:'418202'},
+ ETH:{nets:['Arbitrum','Base','Ethereum'],ok:'Ethereum',min:'0.002 ETH',addr:'0xEXAMPLE-nw-maya-41c9',tag:'418203'},
+ SOL:{nets:['Solana','Ethereum (wrapped)','BNB Smart Chain'],ok:'Solana',min:'0.05 SOL',addr:'EXAMPLE-nw-maya-sol-9q3e',tag:'418204'},
+ USDC:{nets:['Solana','Ethereum (ERC-20)','Polygon'],ok:'Ethereum (ERC-20)',min:'10 USDC',addr:'0xEXAMPLE-nw-maya-usdc-77f0',tag:'418205'}
+};
+const RECV=[['BTC','Bitcoin'],['ETH','Ethereum'],['USDT','Tether'],['XRP','XRP'],['BNB','BNB'],['SOL','Solana'],['USDC','USD Coin'],['ADA','Cardano'],['AVAX','Avalanche'],['TRX','Tron'],['DOT','Polkadot'],['LINK','Chainlink'],['LTC','Litecoin'],['XLM','Stellar'],['ATOM','Cosmos'],['DOGE','Dogecoin'],['SHIB','Shiba Inu'],['NEAR','Near']];
+const cpk=()=>CPC[S.d.ci||0];
+const cpbar=()=>`<div class="cpbar"><b>Coin ${(S.d.ci||0)+1} of 4 · ${C[cpk()].n}</b><span class="tabular">Switches ${S.d.sw||0} · Copied ${S.d.cp||0}</span></div>`;
+const inc=k=>{S.d[k]=(S.d[k]||0)+1};
+function appSwitch(to,scr){
+ const s0=S;inc('sw');S.modal={t:'switch',to};render();
+ setTimeout(()=>{if(S!==s0)return;S.modal=null;go(scr)},900);
+}
+function field(label,val,pasteArg,copyArg){
+ return `<div class="field"><div class="grow"><div class="k">${label}</div><div class="v ${val?'':'ph'}">${val||'Empty'}</div></div>${copyArg?`<button class="chip" data-a="cpcopy" data-arg="${copyArg}">${ic('copy',14)} Copy</button>`:''}${pasteArg?`<button class="chip" data-a="expaste" data-arg="${pasteArg}">Paste</button>`:''}</div>`;
+}
+SCR['cp-receive']=()=>({chrome:'nw',back:false,body:`${cpbar()}
+ <div><h1 class="h1">Receive crypto</h1><p class="muted small" style="margin:6px 0 0">You’re moving your crypto to your Northwind account. Choose the coin you’re moving.</p></div>
+ <label class="search">${ic('search',18)}<input id="q2" type="search" placeholder="Search 240 coins" aria-label="Search coins"></label>
+ <div class="sl" id="coins">${RECV.map(([k,n])=>`<button class="item rowbtn" data-a="cppick" data-arg="${k}" data-name="${(k+' '+n).toLowerCase()}">${mono(k[0],C[k]?C[k].tint:'#EDEDED')}<div class="grow"><div class="nm">${n}</div><div class="sub">${k}</div></div>${ic('chevR',18)}</button>`).join('')}</div>`});
+SCR['cp-address']=()=>{const k=cpk(),d=CP[k];return {chrome:'nw',body:`${cpbar()}
+ <div><h1 class="h1">Your ${k} deposit details</h1><p class="muted small" style="margin:6px 0 0">You’re moving your crypto to your Northwind account. Nothing moves until you approve at your exchange.</p></div>
+ <div class="kv" style="padding:0;border:0"><span>Network</span><span>${d.ok} only</span></div>
+ ${field('Address',d.addr,null,'addr')}${field('Memo tag (required)',d.tag,null,'tag')}
+ ${NOTE('warn','alert','Paste both into your exchange','Without the memo tag, Northwind can’t match the deposit to you. Your clipboard holds one item at a time.')}`,
+ cta:btn(S.d.ret?'Back to Exchange':'Open Exchange','cpgoex')}};
+SCR['ex-coin']=()=>{const k=cpk(),d=C[k];return {chrome:'ex',body:`${cpbar()}
+ <div class="row">${mono(k[0],'#DADADA',44)}<div class="grow"><div class="h2">${d.n}</div><div class="small muted">${k}</div></div></div>
+ <div class="card"><div class="muted small">Your balance</div><div class="big tabular">${money(d.usd)}</div><div class="small muted tabular">${qtyStr(k,d.qty)}</div></div>
+ <div class="row"><button class="btn out sm" disabled>Buy</button><button class="btn out sm" disabled>Sell</button><button class="btn sm" data-a="exsend">Send</button></div>`}};
+SCR['ex-scam']=()=>({chrome:'ex',body:`${cpbar()}
+ <div class="circle" style="background:#FFE9C7"><span style="color:var(--warn)">${ic('alert',34,1.6)}</span></div>
+ <h1 class="h1 center">We will never ask you to transfer crypto</h1>
+ <p class="muted center" style="margin:0">Scammers pose as support staff, investment sites or friends. If anyone asked you to send this, stop now.</p>
+ <div class="card center"><b>Is anyone asking you to send crypto?</b></div>`,
+ cta:btn('No, I’m moving my own crypto','exscam')+'<button class="btn ghost" data-a="exstop">Yes, stop this send</button>'});
+SCR['ex-terms']=()=>({chrome:'ex',body:`${cpbar()}
+ <h1 class="h1">Accept transfer terms</h1>
+ <div class="card"><ul class="risks"><li>Crypto transfers can’t be reversed.</li><li>You are responsible for the address, memo tag and network.</li><li>Network and withdrawal fees apply to every send.</li><li>We may delay or hold a send to protect your account.</li></ul></div>
+ <label class="chk"><input type="checkbox" data-a="exagree" ${S.d.exAgree?'checked':''}><span>I accept the transfer terms</span></label>`,
+ cta:btn('Accept','exterms',null,'',!S.d.exAgree)});
+SCR['ex-verify']=()=>({chrome:'ex',body:`${cpbar()}
+ ${S.d.verified?`<div class="circle ok">${ic('check',34,2)}</div><h1 class="h1 center">Identity verified</h1><div class="center">${pill('credited').replace('Credited','Verified')}</div><p class="muted center" style="margin:0">You can send crypto now.</p>`
+ :`<div class="circle" style="background:#DCDCDC">${ic('clock',34,1.6)}</div><h1 class="h1 center">Verifying your identity: 1–3 days</h1><div class="center"><span class="pill p-pending">${ic('clock',14,2)}Pending</span></div><p class="muted center" style="margin:0">You can’t send crypto until this finishes. We’ll email you.</p><button class="btn out sm" data-a="exff" data-arg="verify">${ic('ff',16)} Fast-forward 2 days</button>`}`,
+ cta:btn(S.d.verified?'Continue':'Waiting for verification','go','ex-send',null,!S.d.verified)});
+SCR['ex-send']=()=>{
+ const k=cpk(),d=CP[k];const rest=S.d.phase==='rest';const pe=S.d.pasteErr;
+ const ready=S.d.exAddr&&S.d.exTag&&S.d.net===d.ok;
+ return {chrome:'ex',body:`${cpbar()}
+ <h1 class="h1">${rest?'Send the rest of your '+k:'Send '+k}</h1>
+ ${rest?NOTE('info','info','Test amount arrived','Address, memo tag and network are filled from your test send.'):''}
+ ${field('To address',S.d.exAddr?d.addr:'',rest?null:'addr')}
+ ${field('Memo / tag',S.d.exTag?d.tag:'',rest?null:'tag')}
+ ${pe?`<div class="note err">${ic('alert',20)}<div><b>Your clipboard has the ${pe==='tag'?'address, not the memo tag':'memo tag, not the address'}</b>Go back to Northwind and copy the ${pe==='tag'?'memo tag':'address'}.<button class="btn out sm" style="margin-top:8px" data-a="exbacknw">Switch to Northwind</button></div></div>`:''}
+ <div class="sec"><span>Network</span></div>
+ <div class="sl">${d.nets.map(n=>`<button class="item rowbtn" data-a="exnet" data-arg="${n}" aria-pressed="${S.d.net===n}"><div class="grow"><div class="nm">${n}</div></div>${S.d.net===n?ic('check',18,2):''}</button>`).join('')}</div>
+ ${S.d.net&&S.d.net!==d.ok?NOTE('err','alert','Northwind won’t receive this',`Northwind only accepts ${k} on ${d.ok}. ${k} sent on ${S.d.net} is lost.`):''}
+ <div class="kv" style="padding:0;border:0"><span>Amount</span><span>${rest?qtyStr(k,C[k].qty)+' (the rest)':'$10.00 test'}</span></div>
+ ${rest?'':NOTE('info','info','Send a test amount first','Northwind recommends a small test before the full amount.')}`,
+ cta:btn(rest?'Send the rest':'Send $10 test','exgo',null,'',!ready)};
+};
+SCR['ex-code']=()=>({chrome:'ex',back:false,body:`${cpbar()}
+ <h1 class="h1">Enter the code we sent you</h1><p class="muted small" style="margin:-6px 0 0">Every send needs a new code.</p>
+ ${codeBoxes(!!S.d.codeFilled)}
+ ${!S.d.codeFilled?`<button class="autofill" data-a="excode">${ic('send',16)} <span>From Messages <small>739 105</small></span></button>`:''}`});
+SCR['ex-wait']=()=>({chrome:'ex',back:false,body:`${cpbar()}
+ <h1 class="h1">Test sent</h1>
+ <p class="muted" style="margin:0">Wait until it arrives in your Northwind account before you send the rest. This can take 10 to 60 minutes.</p>
+ <div class="card row">${mono(cpk()[0],'#DADADA')}<div class="grow"><b>$10.00 of ${cpk()}</b><div class="small muted">to ${CP[cpk()].addr}</div></div>${pill(S.d.testArr?'credited':'confirming').replace('Credited','Delivered')}</div>
+ ${S.d.testArr?'':`<button class="btn out sm" data-a="exff" data-arg="test">${ic('ff',16)} Fast-forward 30 minutes</button>`}`,
+ cta:btn(S.d.testArr?'Check Northwind':'Waiting for the test to arrive','excheck',null,'',!S.d.testArr)});
+SCR['cp-test']=()=>({chrome:'nw',back:false,body:`${cpbar()}
+ <div class="circle ok">${ic('check',34,2)}</div><h1 class="h1 center">Test received</h1>
+ <p class="muted center" style="margin:0">$10.00 of ${cpk()} is in your Northwind account. You can send the rest from your exchange.</p>`,
+ cta:btn('Back to Exchange','cpgorest')});
+SCR['ex-done']=()=>({chrome:'ex',back:false,body:`${cpbar()}
+ <div class="circle ok">${ic('send',30,1.8)}</div><h1 class="h1 center">Sent</h1>
+ <div class="center">${pill('submitted')}</div>
+ <p class="muted center" style="margin:0">${qtyStr(cpk(),C[cpk()].qty)} to ${CP[cpk()].addr}. Arrives in 10 to 60 minutes.</p>`,
+ cta:btn('Back to Northwind','exhome')});
+SCR['cp-coin-done']=()=>{const k=cpk(),last=(S.d.ci||0)===3;return {chrome:'nw',back:false,body:`${cpbar()}
+ <div class="circle ok">${ic('check',34,2)}</div><h1 class="h1 center">${C[k].n} received</h1>
+ <div class="center">${pill('credited')}</div>
+ <p class="muted center" style="margin:0">You moved ${qtyStr(k,C[k].qty)} to your Northwind account.${last?'':' The next coin starts again from Receive crypto.'}</p>`,
+ cta:btn(last?'Finish':'Next coin','cpnext',null,'out')}};
+SCR['cp-end']=()=>({chrome:'nw',back:false,body:`
+ <div class="circle ok">${ic('check',34,2)}</div>
+ <div class="center"><h1 class="h1">Four coins moved</h1><p class="muted" style="margin:6px 0 0">You copied and pasted your way through four separate sends.</p></div>
+ <div class="greycard">${[['App switches',S.d.sw||0],['Addresses and tags copied',S.d.cp||0],['Warnings dismissed',S.d.wd||0],['Test sends',S.d.ts||0],['Codes entered',S.d.cc||0],['Identity check','1–3 days']].map(r=>`<div class="kv" style="padding:0;border:0"><span>${r[0]}</span><span class="tabular">${r[1]}</span></div>`).join('')}</div>
+ <h2 class="h2">Left behind at Coinbase</h2>
+ <div class="item off">${mono('D',C.DOGE.tint)}<div class="grow"><div class="nm">Dogecoin · 11.4 DOGE</div><div class="sub">Below Northwind’s deposit minimum. It wouldn’t be credited.</div></div></div>
+ <div class="item off">${mono('Z',C.ZORB.tint)}<div class="grow"><div class="nm">Zorbcoin · 820 ZORB</div><div class="sub">Not in Northwind’s Receive list.</div></div></div>`,
+ cta:btn('Done','finish',null,'out')});
+
+/* manual deposit (never an automatic fallback) */
+const ADDR={BTC:['Bitcoin','bc1q-example-maya-northwind-demo-0001','0.0001 BTC'],ETH:['Ethereum','0xEXAMPLE-maya-northwind-demo-0002','0.001 ETH'],SOL:['Solana','EXAMPLE-maya-northwind-demo-sol-0003','0.01 SOL'],USDC:['Ethereum (ERC-20)','0xEXAMPLE-maya-northwind-demo-0004','1 USDC']};
+function qrSVG(seed){
+ let h=0;for(const ch of seed)h=(h*31+ch.charCodeAt(0))>>>0;
+ const n=25;let r='';
+ const fin=(x,y)=>`<rect x="${x}" y="${y}" width="7" height="7" fill="#1C1C1C"/><rect x="${x+1}" y="${y+1}" width="5" height="5" fill="#fff"/><rect x="${x+2}" y="${y+2}" width="3" height="3" fill="#1C1C1C"/>`;
+ for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+  if((x<8&&y<8)||(x>16&&y<8)||(x<8&&y>16))continue;
+  h=(h*1664525+1013904223)>>>0;
+  if((h>>>24)&1)r+=`<rect x="${x}" y="${y}" width="1" height="1" fill="#1C1C1C"/>`;
+ }
+ return `<svg viewBox="-1 -1 27 27" width="168" height="168" role="img" aria-label="Example QR code, not scannable" style="display:block;margin:0 auto"><rect x="-1" y="-1" width="27" height="27" fill="#fff"/>${fin(0,0)}${fin(18,0)}${fin(0,18)}${r}</svg>`;
+}
+SCR['manual-addr']=()=>{
+ const k=S.d.mcoin||'BTC';const [net,addr,min]=ADDR[k];
+ return {prog:null,body:`
+ <div><h1 class="h1">Deposit manually</h1><p class="muted small" style="margin:6px 0 0">You’re moving your crypto to your Northwind account from another app. This is outside AUTH.</p></div>
+ ${NOTE('warn','alert','This deposit may be held','Manual sends are not matched to your account name and can be held for review. If that happens, Northwind support helps return the coins, which can take several days.')}
+ <div class="chips" role="group" aria-label="Choose a coin">${['BTC','ETH','SOL','USDC'].map(c=>`<button class="chip" data-a="mcoin" data-arg="${c}" aria-pressed="${c===k}">${c}</button>`).join('')}</div>
+ <div class="greycard"><div style="background:#fff;border-radius:12px;padding:12px">${qrSVG(addr)}</div><div class="center small muted">Example address for this demo. It is not a real wallet.</div></div>
+ ${receipt('<span class="muted small">Send only</span><b>'+k+'</b>',[['Network',net],['Minimum',min],['Address',`${addr} ${copyBtn()}`]])}
+ ${NOTE('err','alert','Send only '+k+' on the '+net+' network','Any other coin or network is lost and cannot be returned.')}`,
+ cta:btn('Back to linking my account','back',null,'')};
+};
+
+/* ---------- actions ---------- */
+const A={
+ close(){S.open=false;render()},
+ back(){back()},
+ go(a){go(a)},
+ agree(_,el){S.d.agree=el.checked;render()},
+ doc(){toast('Concept: this would open the document.')},
+ landNext(){go(lvl().kind==='single'?'l1-pick':'b-pick')},
+ filter(v){S.d.filter=v;render()},
+ wallet(){toast('Wallet connections arrive in a later phase of this demo. Pick Coinbase to continue.')},
+ manual(){S.modal={t:'manual'};render()},
+ cppick(k){if(k!==cpk())return toast(`This demo moves BTC, ETH, SOL, then USDC. Pick ${C[cpk()].n}.`);S.modal={t:'before'};render()},
+ cpbefore(){inc('wd');S.modal=null;go('cp-address')},
+ cpcopy(w){S.d.clip=w;inc('cp');toast(w==='addr'?'Address copied':'Memo tag copied');render()},
+ cpgoex(){if(S.d.ret){S.d.ret=false;appSwitch('Exchange','ex-send')}else appSwitch('Exchange','ex-coin')},
+ exsend(){go('ex-scam')},
+ exscam(){inc('wd');go(!S.d.terms?'ex-terms':!S.d.verified?'ex-verify':'ex-send')},
+ exstop(){toast('Send stopped. In this demo, Maya is moving her own crypto.')},
+ exagree(_,el){S.d.exAgree=el.checked;render()},
+ exterms(){S.d.terms=true;go('ex-verify')},
+ exff(w){if(w==='verify'){S.d.verified=true;toast('Two days later: your identity is verified.')}else{S.d.testArr=true;toast('30 minutes later: the test amount arrived.')}render()},
+ expaste(w){if(S.d.clip!==w){S.d.pasteErr=w;render();return}S.d.pasteErr=null;if(w==='addr')S.d.exAddr=true;else S.d.exTag=true;render()},
+ exbacknw(){S.d.ret=true;S.d.pasteErr=null;appSwitch('Northwind','cp-address')},
+ exnet(n){S.d.net=n;render()},
+ exgo(){S.d.codeFilled=false;go('ex-code')},
+ excode(){const s0=S;S.d.codeFilled=true;inc('cc');render();setTimeout(()=>{if(S!==s0||S.screen!=='ex-code')return;if(S.d.phase==='rest')go('ex-done');else{inc('ts');go('ex-wait')}},650)},
+ excheck(){appSwitch('Northwind','cp-test')},
+ cpgorest(){S.d.phase='rest';appSwitch('Exchange','ex-send')},
+ exhome(){appSwitch('Northwind','cp-coin-done')},
+ cpnext(){if((S.d.ci||0)>=3){go('cp-end');return}
+  ['clip','exAddr','exTag','net','phase','testArr','pasteErr','ret'].forEach(k=>delete S.d[k]);
+  S.d.ci=(S.d.ci||0)+1;S.hist=[];S.screen=null;go('cp-receive',{nohist:true})},
+ manaddr(){S.modal=null;S.d.mcoin=S.d.mcoin||'BTC';go('manual-addr')},
+ mcoin(k){S.d.mcoin=k;render()},
+ l1pick(n){if(n!=='Coinbase')return toast('This concept follows Coinbase. Pick Coinbase.');S.d.codeFilled=false;go('l1-code')},
+ bpick(n){if(n!=='Coinbase')return toast('This concept follows Coinbase. Pick Coinbase.');go('b-signin')},
+ l1fill(){S.d.codeFilled=true;render()},
+ l1newcode(){S.d.expFixed=true;S.d.codeFilled=false;toast('New code sent.');render()},
+ l1verify(){S.d.amt='0';S.d.netOk=false;go('l1-amount')},
+ key(k){let a=S.d.amt||'0';if(k==='⌫')a=a.length>1?a.slice(0,-1):'0';else if(k==='.'){if(!a.includes('.'))a+='.'}else{if(a==='0')a=k;else if(!(a.includes('.')&&a.split('.')[1].length>=2)&&a.length<9)a+=k}S.d.amt=a;render()},
+ pct(p){const d=C[l1c()];S.d.amt=(d.usd*parseFloat(p)).toFixed(2).replace(/\.00$/,'');render()},
+ netok(_,el){S.d.netOk=el.checked;render()},
+ l1amt(){go('l1-review')},
+ l1approve(){go('l1-success')},
+ ack(_,el){S.d.ack=el.checked;render()},
+ l1next(){if((S.d.i||0)>=3){go('l1-end')}else{S.d.i=(S.d.i||0)+1;S.d.codeFilled=false;S.d.amt='0';S.d.netOk=false;S.hist=[];S.screen=null;go('l1-pick',{nohist:true})}},
+ explorer(_,el,e){e.preventDefault();toast('Concept: this would open a block explorer.')},
+ copy(){try{navigator.clipboard.writeText('0x…').catch(()=>{})}catch(e){}toast('Transaction ID copied.')},
+ finish(){const o=S.level===5?solOut():null;const mv=allMovers().filter(k=>k!==o);S.done=S.level===1?L1:S.level===3?['BTC','ETH','SOL','USDC']:mv.length?mv:['BTC','ETH','SOL','USDC'];S.open=false;S.screen=null;S.hist=[];render()},
+ bsign(){S.d.codeFilled=false;go('b-2fa')},
+ bfill2fa(){S.d.codeFilled=true;render()},
+ bverify(){S.d.sel=ORDER.slice();go('b-choose')},
+ selcoin(k,el){const s=S.d.sel;if(el.checked&&!s.includes(k))s.push(k);if(!el.checked)S.d.sel=s.filter(x=>x!==k);render()},
+ selall(){S.d.sel=S.d.sel.length===ORDER.length?[]:ORDER.slice();render()},
+ sellz(_,el){S.d.sellZ=el.checked;render()},
+ basis(){S.d.basisOpen=!S.d.basisOpen;render()},
+ statuses(){S.modal={t:'status'};render()},
+ bcode(){const s0=S;S.d.codeFilled=true;render();const n=movers().now.length;setTimeout(()=>{if(S!==s0||S.screen!=='b-code')return;const i=(S.d.ci||0)+1;if(i>=n){S.d.ci=0;go('b-track',{nohist:true})}else{S.d.ci=i;S.d.codeFilled=false;render()}},650)},
+ bbatch(){const s0=S;S.d.codeFilled=true;render();setTimeout(()=>{if(S!==s0||S.screen!=='b-batch')return;go('b-track',{nohist:true})},750)},
+ solskip(){const n=movers().now.length;const i=(S.d.ci||0)+1;if(i>=n){S.d.ci=0;go('b-track',{nohist:true})}else{S.d.ci=i;S.d.codeFilled=false;render()}},
+ retrysol(){S.modal={t:'retry'};S.d.rcode=false;render()},
+ rfill(){const s0=S;S.d.rcode=true;render();setTimeout(()=>{if(S!==s0)return;S.modal=null;S.d.solRetryT=S.tick;toast('Code accepted. SOL is on its way.');render()},700)},
+ solnew(){toast('Concept: this starts a new plan for SOL.')},
+ vstart(){const s0=S;S.modal={t:'faceid',txt:'Approve at Coinbase',sub:'One approval for all 4 coins.'};render();setTimeout(()=>{if(S!==s0)return;S.modal=null;S.screen='v-track';S.open=true;S.tick=0;render()},1200)},
+ resume(){if(!S.screen)S.screen=startOf(S.level);S.open=true;render()}
+};
+function approve(){
+ if(S.screen!=='b-review'||S.modal||!S.d.ack)return;
+ S.modal={t:'faceid'};render();
+ setTimeout(()=>{S.modal=null;if(S.screen!=='b-review')return render();S.d.ci=0;S.d.codeFilled=false;S.hist=[];if(lvl().codes)go('b-code',{nohist:true});else if(lvl().partner)go('b-batch',{nohist:true});else go('b-track',{nohist:true})},1300);
+}
+
+/* ---------- render ---------- */
+function renderSeg(){
+ const md=$('#mode');md.hidden=S.level!==1&&S.level!==5;
+ if(S.level===5){md.setAttribute('aria-label','Scenario');md.style.gridTemplateColumns='repeat(3,1fr)';md.innerHTML=[['ok','Happy path'],['fail','SOL fails'],['held','SOL held']].map(([k,l])=>`<button data-mode5="${k}" aria-pressed="${MODE5===k}">${l}</button>`).join('')}
+ else{md.setAttribute('aria-label','How today works');md.style.gridTemplateColumns='';md.innerHTML=[['cp','Copy-paste'],['auth','With AUTH']].map(([k,l])=>`<button data-mode="${k}" aria-pressed="${MODE1===k}">${l}</button>`).join('')}
+ $('#seg').innerHTML=LV.map(v=>`<button role="tab" aria-selected="${v.id===S.level}" aria-label="${LNAME[v.id]}" data-lv="${v.id}"><b>${v.a}</b><span>${v.b}</span></button>`).join('');
+}
+function renderHost(){
+ const L=S.level,c=lvl();const tracking=S.screen&&TRACK.has(S.screen)&&!S.open&&(S.screen==='b-track'||S.screen==='v-track');
+ let h=`<div class="hh"><div class="logo" id="logo"><i>N</i>Northwind Invest</div><div class="avatar" aria-label="Maya">M</div></div>`;
+ if(tracking){const n=S.screen==='v-track'?4:allMovers().length;h+=`<button class="banner" data-a="resume">${ic('spin',20)}<span class="grow">Moving ${n} coins<small>Tap to see progress. They keep moving.</small></span>${ic('arrow',18)}</button>`}
+ const val=S.done?S.done.reduce((a,k)=>a+C[k].usd,0):0;
+ h+=`<div class="card"><div class="muted small">Portfolio</div><div class="big">${money(val)}</div>${S.done?S.done.map(k=>`<div class="hold-row"><span>${C[k].n}</span><span class="tabular">${money(C[k].usd)}</span></div>`).join(''):'<div class="small muted" style="margin-top:4px">No crypto here yet.</div>'}</div>`;
+ if(!S.done){
+  if(L===11)h+=`<div class="found"><div class="row" style="justify-content:space-between">${ic('link',26)}<span class="tag2" style="position:static">Later phase (concept)</span></div><h2 class="h2">Your Coinbase account is linked</h2><p class="small" style="margin:0">BTC, ETH, SOL and USDC · $8,970.00. You’re moving your crypto to your Northwind account. Nothing is sold. Nothing moves until you approve at Coinbase.</p><button class="btn" data-a="vstart">Approve at Coinbase</button></div>`;
+  else h+=`<div class="card" style="display:grid;gap:10px"><h2 class="h2">Move crypto you already own</h2><p class="small muted" style="margin:0">${c.kind==='single'?(MODE1==='cp'?'Copy a Northwind address into your exchange, one coin at a time.':'Move coins from your exchange, one at a time.'):c.kind==='sell'?'Sell at your exchange, then move the cash in one transfer.':'Move several coins from your exchange in one go.'} ${c.kind==='bulk'&&!c.partner?'Nothing moves until you approve your plan.':'Nothing moves until you approve at your exchange.'}</p>${c.kind==='bulk'?btn('Move all my crypto','resume'):S.screen?btn('Resume','resume'):btn('Start a move','resume')}</div>`;
+ }else h+=`<div class="note ok">${ic('check',20)}<div><b>Moved from Coinbase</b>${S.level===1?(MODE1==='cp'?'Four separate copy-paste sends from your exchange.':'Four transfers. USDC counted as landed after the hold.'):'Your coins are here and ready to use.'}</div></div>`;
+ h+=FOOT;
+ $('#host').innerHTML=h;
+}
+function renderSheet(){
+ const sh=$('#sheet');sh.classList.toggle('open',S.open&&!!S.screen);
+ if(!S.screen){sh.innerHTML='';return}
+ const sb=sh.querySelector('#sb');const keep=(S.seen===S.screen&&sb)?sb.scrollTop:0;
+ const m=SCR[S.screen]();sh.classList.toggle('ex',m.chrome==='ex');
+ sh.innerHTML=page(m);
+ const nsb=sh.querySelector('#sb');if(nsb)nsb.scrollTop=keep;S.seen=S.screen;
+ if(S.screen==='b-review')bindSlide();
+}
+function renderModal(){
+ const l=$('#layer');const old=l.querySelector('.modal');
+ if(!S.modal){if(old)old.remove();return}const t=S.modal.t;let h='',cls='';
+ if(t==='manual'){cls='mid';h=`<div class="msheet" role="alertdialog" aria-label="Deposit manually">${NOTE('warn','alert','A manual send can go wrong','Check every risk before you continue.')}<ul class="risks"><li><b>Wrong network:</b> the coins are lost and can’t be returned.</li><li><b>Missing memo or tag:</b> some coins need one. Without it, Northwind can’t match the deposit to you.</li><li><b>Below the minimum:</b> amounts under the deposit minimum aren’t credited.</li><li><b>Held for review:</b> sends started outside AUTH can be held until Northwind support releases them or returns them to an address you give.</li></ul><p class="small muted" style="margin:0">Use manual deposit only if you can’t link your account. Linking is the safe way to move crypto.</p>${btn('Go back and link my account','mclose')}<button class="btn out sm" data-a="manaddr">${ic('qr',16)} I understand, show the address</button></div>`}
+ if(t==='before'){const k=cpk(),d=CP[k];h=`<div class="msheet" role="dialog" aria-label="Before you send"><h2 class="h2">Before you send ${k}</h2><ul class="risks"><li><b>Only send ${k} on ${d.ok}.</b> ${k} sent on any other network is lost.</li><li><b>Minimum deposit: ${d.min}.</b> Less than that isn’t credited.</li><li><b>Include the memo tag.</b> Without it, Northwind can’t match the deposit to you.</li><li><b>Send a test amount first.</b> Send the rest once it arrives.</li></ul>${btn('I understand','cpbefore')}</div>`}
+ if(t==='switch'){cls='switch';const toEx=S.modal.to==='Exchange';h=`<div class="apps${toEx?'':' back'}" aria-hidden="true"><div class="appc"><i>N</i>Northwind</div><div class="appc exc"><i></i>Exchange</div></div><div class="swlbl" role="status">Switching to ${S.modal.to}</div>`}
+ if(t==='faceid'){cls='mid';h=`<div class="msheet"><div class="faceid"><div class="f">${ic('face',40,1.6)}</div><div class="h2">${S.modal.txt||'Approve with Face ID'}</div><div class="small muted">${S.modal.sub||'Approving once for the whole plan.'}</div></div></div>`}
+ if(t==='retry'){h=`<div class="msheet" role="dialog" aria-label="Retry SOL"><div class="row"><h2 class="h2 grow">Enter Coinbase’s code to send SOL</h2><button class="ib" data-a="mclose" aria-label="Close">${ic('x')}</button></div><p class="small muted" style="margin:0">Coinbase sent a new code to your phone ending in 42. Your other coins keep moving.</p>${codeBoxes(!!S.d.rcode)}${!S.d.rcode?`<button class="autofill" data-a="rfill">${ic('send',16)} <span>From Messages <small>552 104</small></span></button>`:`<div class="center">${pill('credited','Code accepted')}</div>`}</div>`}
+ if(t==='status'){h=`<div class="msheet" role="dialog" aria-label="Transfer statuses"><div class="row"><h2 class="h2 grow">What each status means</h2><button class="ib" data-a="mclose" aria-label="Close">${ic('x')}</button></div><p class="small muted" style="margin:0">A submitted transfer is not a completed one. Coins are credited only once Northwind confirms funds are available.</p><div class="sl">${STATUS_HELP.map(([k,m])=>`<div class="item" style="display:block">${pill(k)}<div class="small" style="margin-top:6px">${m}</div></div>`).join('')}</div></div>`}
+ if(old&&old._h===h)return;if(old)old.remove();
+ const d=document.createElement('div');d.className='modal '+cls;d.innerHTML=h;d._h=h;
+ if(t!=='faceid'&&t!=='switch')d.addEventListener('click',e=>{if(e.target===d){S.modal=null;render()}});
+ l.appendChild(d);
+}
+function render(){renderSeg();renderHost();renderSheet();renderModal()}
+A.mclose=()=>{S.modal=null;render()};
+
+/* ---------- events ---------- */
+$('#phone').addEventListener('click',e=>{
+ const lv=e.target.closest('[data-lv]');if(lv){setLevel(+lv.dataset.lv);return}
+ const md=e.target.closest('[data-mode]');if(md){MODE1=md.dataset.mode;setLevel(1);return}
+ const m5=e.target.closest('[data-mode5]');if(m5){MODE5=m5.dataset.mode5;setLevel(5);return}
+ const el=e.target.closest('[data-a]');if(!el)return; const f=A[el.dataset.a];if(f)f(el.dataset.arg,el,e);
+});
+$('#phone').addEventListener('input',e=>{
+ if(e.target.id==='q2'){const q=e.target.value.trim().toLowerCase();document.querySelectorAll('#coins .rowbtn').forEach(t=>{t.hidden=!!q&&!t.dataset.name.includes(q)})}
+ if(e.target.id==='q'){const q=e.target.value.trim().toLowerCase();document.querySelectorAll('#tiles .tile').forEach(t=>{t.hidden=!!q&&!t.dataset.name.includes(q)})}
+});
+/* swipe on the control */
+let sx=null;const strip=$('#strip');
+strip.addEventListener('pointerdown',e=>{sx=e.clientX});
+strip.addEventListener('pointerup',e=>{if(sx==null)return;const dx=e.clientX-sx;sx=null;if(Math.abs(dx)>45)shift(dx<0?1:-1)});
+strip.addEventListener('pointercancel',()=>{sx=null});
+document.addEventListener('keydown',e=>{
+ if(/INPUT|TEXTAREA/.test(document.activeElement.tagName))return;
+ if(e.key==='ArrowRight')shift(1);if(e.key==='ArrowLeft')shift(-1);
+});
+window.addEventListener('hashchange',()=>{const m=/^#star-(\d+)$/.exec(location.hash);if(m&&CFG[+m[1]]&&+m[1]!==S.level)setLevel(+m[1])});
+
+function bindSlide(){
+ const sl=$('#slide'),kn=$('#knob'),fl=$('#sfill');if(!sl)return;
+ let x0=null,max=0;
+ const set=x=>{kn.style.transform=`translateX(${x}px)`;fl.style.width=(x+50)+'px'};
+ kn.addEventListener('pointerdown',e=>{x0=e.clientX;max=sl.clientWidth-54;kn.setPointerCapture(e.pointerId)});
+ kn.addEventListener('pointermove',e=>{if(x0==null)return;set(Math.max(0,Math.min(max,e.clientX-x0)))});
+ const end=e=>{if(x0==null)return;const x=Math.max(0,Math.min(max,e.clientX-x0));x0=null;if(x>=max*.85){set(max);approve()}else{kn.style.transition='transform .2s';set(0);setTimeout(()=>kn.style.transition='',220)}};
+ kn.addEventListener('pointerup',end);kn.addEventListener('pointercancel',()=>{x0=null;set(0)});
+ sl.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();set(sl.clientWidth-54);approve()}});
+}
+/* clock: one deterministic tick per second on waiting screens */
+setInterval(()=>{
+ if(!TRACK.has(S.screen))return;
+ S.tick++;
+ /* the 2-day exchange hold ends by itself a few seconds after the other coins land */
+ if(S.screen==='b-track'&&lvl().hold&&!S.rel&&allMovers().includes('USDC')&&allMovers().filter(c=>c!=='USDC').every(c=>isFinal(ts(c).st))){S.wait=(S.wait||0)+1;if(S.wait>=7){S.rel=true;S.relT=S.tick;toast('Two days later: Coinbase released the USDC hold.')}}
+ if(S.screen==='v-track'&&allMovers().every(c=>ts(c).st==='credited')){S.screen='v-success';S.seen=null}
+ if(S.open||S.screen==='b-track'||S.screen==='v-track')render();
+},1000);
+/* two-finger long press on the logo is reserved for a later scenarios sheet */
+
+const m0=/^#star-(\d+)$/.exec(location.hash);
+setLevel(m0&&CFG[+m0[1]]?+m0[1]:5);
+})();
+</script>
+
+</body></html>
