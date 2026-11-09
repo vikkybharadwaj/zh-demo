@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>zh-demo</title>
+<style>
+  body { font-family: system-ui, sans-serif; display: grid; place-items: center; min-height: 100vh; margin: 0; background: #f6f5f1; color: #222; }
+  main { text-align: center; }
+  button { font-size: 1.1rem; padding: .6rem 1.2rem; border: 0; border-radius: 8px; background: #d97757; color: #fff; cursor: pointer; }
+  #count { font-size: 4rem; margin: 1rem 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>zh-demo</h1>
+  <div id="count">0</div>
+  <button id="btn">Click me</button>
+</main>
+<script>
+  let n = 0;
+  document.getElementById('btn').onclick = () => {
+    document.getElementById('count').textContent = ++n;
+  };
+</script>
+</body>
+</html>
